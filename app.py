@@ -3,6 +3,7 @@ import spaces
 import torch
 from clip_slider_pipeline import CLIPSliderXL
 from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler,  AutoencoderKL
+import time
 
 #vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
 flash_pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
@@ -14,7 +15,7 @@ def generate(slider_x, slider_y, prompt, iterations, steps,
              x_concept_1, x_concept_2, y_concept_1, y_concept_2, 
              avg_diff_x_1, avg_diff_x_2,
              avg_diff_y_1, avg_diff_y_2):
-
+    start_time = time.time()
     # check if avg diff for directions need to be re-calculated
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]):
         avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations)
@@ -23,8 +24,12 @@ def generate(slider_x, slider_y, prompt, iterations, steps,
     if not sorted(slider_y) == sorted([y_concept_1, y_concept_2]):
         avg_diff_2nd = clip_slider.find_latent_direction(slider_y[0], slider_y[1], num_iterations=iterations)
         y_concept_1, y_concept_2 = slider_y[0], slider_y[1]
-    
+    end_time = time.time()
+    print(f"direction time: {end_time - start_time:.2f} ms")
+    start_time = time.time()
     image = clip_slider.generate(prompt, scale=0, scale_2nd=0, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
+    end_time = time.time()
+    print(f"generation time: {end_time - start_time:.2f} ms")
     comma_concepts_x = ', '.join(slider_x)
     comma_concepts_y = ', '.join(slider_y)
 
