@@ -7,9 +7,10 @@ import time
 import numpy as np
 
 #vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
-flash_pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
-flash_pipe.scheduler = EulerDiscreteScheduler.from_config(flash_pipe.scheduler.config)
-clip_slider = CLIPSliderXL(flash_pipe, device=torch.device("cuda"))
+pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
+pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
+clip_slider = CLIPSliderXL(pipe, device=torch.device("cuda"))
+
 
 @spaces.GPU
 def generate(slider_x, slider_y, prompt, seed, iterations, steps, 
@@ -91,27 +92,51 @@ with gr.Blocks(css=css) as demo:
     avg_diff_y_1 = gr.State()
     avg_diff_y_2 = gr.State()
     
-    with gr.Row():
-        with gr.Column():
-            slider_x = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
-            slider_y = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
-            prompt = gr.Textbox(label="Prompt")
-            submit = gr.Button("Submit")
-        with gr.Group(elem_id="group"):
-          x = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
-          y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
-          output_image = gr.Image(elem_id="image_out")
-    
-    with gr.Accordion(label="advanced options", open=False):
-        iterations = gr.Slider(label = "num iterations", minimum=0, value=100, maximum=300)
-        steps = gr.Slider(label = "num inference steps", minimum=1, value=8, maximum=30)
-        seed  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
-    
-    submit.click(fn=generate,
-                 inputs=[slider_x, slider_y, prompt, seed, iterations, steps, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
-                 outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image])
-    x.change(fn=update_x, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
-    y.change(fn=update_y, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
+    with gr.Tab():
+        with gr.Row():
+            with gr.Column():
+                slider_x = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
+                slider_y = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
+                prompt = gr.Textbox(label="Prompt")
+                submit = gr.Button("Submit")
+            with gr.Group(elem_id="group"):
+              x = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
+              y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
+              output_image = gr.Image(elem_id="image_out")
+        
+        with gr.Accordion(label="advanced options", open=False):
+            iterations = gr.Slider(label = "num iterations", minimum=0, value=100, maximum=300)
+            steps = gr.Slider(label = "num inference steps", minimum=1, value=8, maximum=30)
+            seed  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
+        
+        submit.click(fn=generate,
+                     inputs=[slider_x, slider_y, prompt, seed, iterations, steps, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
+                     outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image])
+        x.change(fn=update_x, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
+        y.change(fn=update_y, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
+    with gr.Tab(label="IP Apater"):
+        with gr.Row():
+            with gr.Column():
+                slider_x_a = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
+                slider_y_a = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
+                prompt_a = gr.Textbox(label="Prompt")
+                submit_a = gr.Button("Submit")
+            with gr.Group(elem_id="group"):
+              x_a = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
+              y_a = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
+              output_image_a = gr.Image(elem_id="image_out")
+        
+        with gr.Accordion(label="advanced options", open=False):
+            iterations_a = gr.Slider(label = "num iterations", minimum=0, value=100, maximum=300)
+            steps_a = gr.Slider(label = "num inference steps", minimum=1, value=8, maximum=30)
+            seed_a  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
+        
+        submit.click(fn=generate,
+                     inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
+                     outputs=[x_a, y_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image_a])
+        x.change(fn=update_x, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image_a])
+        y.change(fn=update_y, inputs=[x_a,y_a, prompt, seed_a, steps_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image_a])
 
+        
 if __name__ == "__main__":
     demo.launch()
