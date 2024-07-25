@@ -11,9 +11,21 @@ pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("
 pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
 clip_slider = CLIPSliderXL(pipe, device=torch.device("cuda"))
 
+pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
+pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
+clip_slider = CLIPSliderXL(pipe, device=torch.device("cuda"))
+
+pipe_adapter = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
+pipe_adapter.scheduler = EulerDiscreteScheduler.from_config(pipe_adapter.scheduler.config)
+pipe_adapter.load_ip_adapter("h94/IP-Adapter", subfolder="sdxl_models", weight_name="ip-adapter_sdxl.bin")
+# scale = 0.8
+# pipe_adapter.set_ip_adapter_scale(scale)
+
+clip_slider_ip = CLIPSliderXL(sd_pipe=pipe_adapter, 
+                    device=torch.device("cuda"))
 
 @spaces.GPU
-def generate(slider_x, slider_y, prompt, seed, iterations, steps, 
+def generate(clip_slider, slider_x, slider_y, prompt, seed, iterations, steps, 
              x_concept_1, x_concept_2, y_concept_1, y_concept_2, 
              avg_diff_x_1, avg_diff_x_2,
              avg_diff_y_1, avg_diff_y_2):
@@ -92,7 +104,7 @@ with gr.Blocks(css=css) as demo:
     avg_diff_y_1 = gr.State()
     avg_diff_y_2 = gr.State()
     
-    with gr.Tab():
+    with gr.Tab(""):
         with gr.Row():
             with gr.Column():
                 slider_x = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
@@ -114,9 +126,10 @@ with gr.Blocks(css=css) as demo:
                      outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image])
         x.change(fn=update_x, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
         y.change(fn=update_y, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
-    with gr.Tab(label="IP Apater"):
+    with gr.Tab(label="image2image"):
         with gr.Row():
             with gr.Column():
+                image = gr.ImageEditor(type="pil", image_mode="L", crop_size=(512, 512))
                 slider_x_a = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
                 slider_y_a = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
                 prompt_a = gr.Textbox(label="Prompt")
