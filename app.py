@@ -4,10 +4,10 @@ import torch
 from clip_slider_pipeline import CLIPSliderXL
 from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler,  AutoencoderKL
 
-vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
-flash_pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash", vae=vae).to("cuda", torch.float16)
+#vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
+flash_pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
 flash_pipe.scheduler = EulerDiscreteScheduler.from_config(flash_pipe.scheduler.config)
-clip_slider = CLIPSliderXL(flash_pipe, device=torch.device("cuda"), iterations=50)
+clip_slider = CLIPSliderXL(flash_pipe, device=torch.device("cuda"), iterations=100)
 
 @spaces.GPU
 def generate(slider_x, slider_y, prompt, 
@@ -95,6 +95,8 @@ with gr.Blocks(css=css) as demo:
           x = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
           y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
           output_image = gr.Image(elem_id="image_out")
+    with gr.Accordion(label="advanced options"):
+        
     
     submit.click(fn=generate,
                  inputs=[slider_x, slider_y, prompt, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
