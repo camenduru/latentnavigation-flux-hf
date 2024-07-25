@@ -17,11 +17,11 @@ def generate(slider_x, slider_y, prompt, iterations, steps,
 
     # check if avg diff for directions need to be re-calculated
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]):
-        avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], iterations=iterations)
+        avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations)
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
 
     if not sorted(slider_y) == sorted([y_concept_1, y_concept_2]):
-        avg_diff_2nd = clip_slider.find_latent_direction(slider_y[0], slider_y[1], iterations=iterations)
+        avg_diff_2nd = clip_slider.find_latent_direction(slider_y[0], slider_y[1], num_iterations=iterations)
         y_concept_1, y_concept_2 = slider_y[0], slider_y[1]
     
     image = clip_slider.generate(prompt, scale=0, scale_2nd=0, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
@@ -95,7 +95,8 @@ with gr.Blocks(css=css) as demo:
           x = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
           y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
           output_image = gr.Image(elem_id="image_out")
-    with gr.Accordion(label="advanced options"):
+    
+    with gr.Accordion(label="advanced options", open=False):
         iterations = gr.Slider(label = "num iterations", minimum=0, value=100, maximum=300)
         steps = gr.Slider(label = "num inference steps", minimum=1, value=8, maximum=30)
         
