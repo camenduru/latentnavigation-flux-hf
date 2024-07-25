@@ -42,15 +42,15 @@ def generate(slider_x, slider_y, prompt, iterations, steps,
 
 @spaces.GPU
 def update_x(x,y,prompt, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2):
-    avg_diff = [avg_diff_x_1.cuda(), avg_diff_x_2.cuda()] 
-    avg_diff_2nd = [avg_diff_y_1.cuda(), avg_diff_y_2.cuda()]
+    avg_diff = (avg_diff_x_1.cuda(), avg_diff_x_2.cuda())
+    avg_diff_2nd = (avg_diff_y_1.cuda(), avg_diff_y_2.cuda())
     image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     return image
 
 @spaces.GPU
 def update_y(x,y,prompt, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2):
-    avg_diff = [avg_diff_x_1.cuda(), avg_diff_x_2.cuda()] 
-    avg_diff_2nd = [avg_diff_y_1.cuda(), avg_diff_y_2.cuda()]
+    avg_diff = (avg_diff_x_1.cuda(), avg_diff_x_2.cuda())
+    avg_diff_2nd = (avg_diff_y_1.cuda(), avg_diff_y_2.cuda())
     image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     return image
   
