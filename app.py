@@ -1,17 +1,39 @@
 import gradio as gr
 import spaces
+import torch
+from clip_slider_pipeline import CLIPSliderXL
+from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler
+
+
+flash_pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
+flash_pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
+clip_slider = CLIPSliderXL(flash_pipe, device=torch.device("cuda"))
 
 @spaces.GPU
-def generate(slider_x, slider_y, prompt):
+def generate(slider_x, slider_y, prompt, x_concept_1, x_concept_2, y_concept_1, y_concept_2):
+
+    # check if avg diff for directions need to be re-calculated
+    if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]):
+        clip_slider.avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[0])
+        x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
+    if not sorted(slider_y) == sorted([y_concept_1, y_concept_2]):
+        clip_slider.avg_diff_2nd = clip_slider.find_latent_direction(slider_y[0], slider_y[0])
+        y_concept_1, y_concept_2 = slider_y[0], slider_y[1]
+    
     comma_concepts_x = ', '.join(slider_x)
     comma_concepts_y = ', '.join(slider_y)
-    return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), gr.update()
 
-def update_x(slider_x):
-  return gr.update()
+    image = clip_slider(prompt, scale=0, scale_2nd=0, num_inference_steps=8)
+  
+    return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), x_concept_1, x_concept_2, y_concept_1, y_concept_2, image
 
-def update_y(slider_y):
-  return gr.update()
+def update_x(x,y,prompt):
+  image = clip_slider(prompt, scale=x, scale_2nd=y, num_inference_steps=8) 
+  return image
+
+def update_y(x,y,prompt):
+  image = clip_slider(prompt, scale=x, scale_2nd=y, num_inference_steps=8) 
+  return image
   
 css = '''
 #group {
@@ -38,6 +60,12 @@ css = '''
 #image_out{position:absolute; width: 80%; right: 10px; top: 40px}
 '''
 with gr.Blocks(css=css) as demo:
+    
+    x_concept_1 = gr.State("")
+    x_concept_2 = gr.State("")
+    y_concept_1 = gr.State("")
+    y_concept_2 = gr.State("")
+    
     with gr.Row():
         with gr.Column():
             slider_x = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
@@ -50,10 +78,10 @@ with gr.Blocks(css=css) as demo:
           output_image = gr.Image(elem_id="image_out")
     
     submit.click(fn=generate,
-                 inputs=[slider_x, slider_y, prompt],
-                 outputs=[x, y, output_image])
-    x.change(fn=update_x, inputs=[slider_x], outputs=[output_image])
-    y.change(fn=update_y, inputs=[slider_y], outputs=[output_image])
+                 inputs=[slider_x, slider_y, prompt, x_concept_1, x_concept_2, y_concept_1, y_concept_2],
+                 outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, output_image])
+    x.change(fn=update_x, inputs=[x,y, prompt], outputs=[output_image])
+    y.change(fn=update_y, inputs=[x,y, prompt], outputs=[output_image])
 
 if __name__ == "__main__":
     demo.launch()
