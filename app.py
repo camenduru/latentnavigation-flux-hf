@@ -27,10 +27,12 @@ def generate(slider_x, slider_y, prompt, x_concept_1, x_concept_2, y_concept_1, 
   
     return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), x_concept_1, x_concept_2, y_concept_1, y_concept_2,  avg_diff_x, avg_diff_y, image
 
+@spaces.GPU
 def update_x(x,y,prompt, avg_diff_x, avg_diff_y):
   image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=8, avg_diff=avg_diff_x, avg_diff_2nd=avg_diff_y) 
   return image
 
+@spaces.GPU
 def update_y(x,y,prompt,  avg_diff_x, avg_diff_y):
   image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=8, avg_diff=avg_diff_x, avg_diff_2nd=avg_diff_y) 
   return image
@@ -66,8 +68,8 @@ with gr.Blocks(css=css) as demo:
     y_concept_1 = gr.State("")
     y_concept_2 = gr.State("")
 
-    avg_diff_x = gr.State()
-    avg_diff_y = gr.State()
+    avg_diff_x = gr.State(None)
+    avg_diff_y = gr.State(None)
     
     with gr.Row():
         with gr.Column():
