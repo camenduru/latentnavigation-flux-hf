@@ -2,10 +2,10 @@ import gradio as gr
 import spaces
 import torch
 from clip_slider_pipeline import CLIPSliderXL
-from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler
+from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler,  AutoencoderKL
 
-
-flash_pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
+vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
+flash_pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash", vae=vae).to("cuda", torch.float16)
 flash_pipe.scheduler = EulerDiscreteScheduler.from_config(flash_pipe.scheduler.config)
 clip_slider = CLIPSliderXL(flash_pipe, device=torch.device("cuda"), iterations=50)
 
