@@ -28,10 +28,10 @@ def generate(slider_x, slider_y, prompt,
     comma_concepts_x = ', '.join(slider_x)
     comma_concepts_y = ', '.join(slider_y)
 
-    avg_diff_x_1 = clip_slider.avg_diff[0].cpu()
-    avg_diff_x_2 = clip_slider.avg_diff[1].cpu()
-    avg_diff_y_1 = clip_slider.avg_diff_2nd[0].cpu()
-    avg_diff_y_2 = clip_slider.avg_diff_2nd[1].cpu()
+    avg_diff_x_1 = avg_diff[0].cpu()
+    avg_diff_x_2 = avg_diff[1].cpu()
+    avg_diff_y_1 = avg_diff_2nd[0].cpu()
+    avg_diff_y_2 = avg_diff_2nd[1].cpu()
   
     return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, image
 
