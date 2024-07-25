@@ -20,7 +20,10 @@ class CLIPSlider:
         self.device = device
         self.pipe = sd_pipe.to(self.device)
         self.iterations = iterations
-        self.avg_diff = self.find_latent_direction(target_word, opposite)
+        if target_word != "" or opposite != "":
+            self.avg_diff = self.find_latent_direction(target_word, opposite)
+        else:
+            self.avg_diff = None
         if target_word_2nd != "" or opposite_2nd != "":
             self.avg_diff_2nd = self.find_latent_direction(target_word_2nd, opposite_2nd)
         else:
