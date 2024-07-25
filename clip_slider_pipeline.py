@@ -108,7 +108,7 @@ class CLIPSlider:
 
 
         torch.manual_seed(seed)
-        image = self.pipe(prompt_embeds=prompt_embeds, **pipeline_kwargs).images
+        image = self.pipe(prompt_embeds=prompt_embeds, **pipeline_kwargs).images[0]
 
         return image
 
@@ -272,7 +272,7 @@ class CLIPSliderXL(CLIPSlider):
 
             torch.manual_seed(seed)
             image = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
-                         **pipeline_kwargs).images
+                         **pipeline_kwargs).images[0]
 
         return image
 
@@ -419,6 +419,6 @@ class CLIPSlider3(CLIPSlider):
 
             torch.manual_seed(seed)
             image = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=clip_pooled_prompt_embeds,
-                         **pipeline_kwargs).images
+                         **pipeline_kwargs).images[0]
 
         return image
