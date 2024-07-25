@@ -23,16 +23,16 @@ def generate(slider_x, slider_y, prompt, x_concept_1, x_concept_2, y_concept_1, 
     comma_concepts_x = ', '.join(slider_x)
     comma_concepts_y = ', '.join(slider_y)
 
-    image = clip_slider(prompt, scale=0, scale_2nd=0, num_inference_steps=8)
+    image = clip_slider.generate(prompt, scale=0, scale_2nd=0, num_inference_steps=8)
   
     return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), x_concept_1, x_concept_2, y_concept_1, y_concept_2, image
 
 def update_x(x,y,prompt):
-  image = clip_slider(prompt, scale=x, scale_2nd=y, num_inference_steps=8) 
+  image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=8) 
   return image
 
 def update_y(x,y,prompt):
-  image = clip_slider(prompt, scale=x, scale_2nd=y, num_inference_steps=8) 
+  image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=8) 
   return image
   
 css = '''
