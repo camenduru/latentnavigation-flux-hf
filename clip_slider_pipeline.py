@@ -32,17 +32,21 @@ class CLIPSlider:
 
     def find_latent_direction(self,
                               target_word:str,
-                              opposite:str):
+                              opposite:str,
+                            num_iterations: int = None):
 
         # lets identify a latent direction by taking differences between opposites
         # target_word = "happy"
         # opposite = "sad"
 
-
+        if num_iterations is not None: 
+            iterations = num_iterations
+        else:
+            iterations = self.iterations
         with torch.no_grad():
             positives = []
             negatives = []
-            for i in tqdm(range(self.iterations)):
+            for i in tqdm(range(iterations)):
                 medium = random.choice(MEDIUMS)
                 subject = random.choice(SUBJECTS)
                 pos_prompt = f"a {medium} of a {target_word} {subject}"
@@ -145,19 +149,23 @@ class CLIPSliderXL(CLIPSlider):
 
     def find_latent_direction(self,
                               target_word:str,
-                              opposite:str):
+                              opposite:str,
+                             num_iterations: int = None):
 
         # lets identify a latent direction by taking differences between opposites
         # target_word = "happy"
         # opposite = "sad"
-
+        if num_iterations is not None: 
+            iterations = num_iterations
+        else:
+            iterations = self.iterations
 
         with torch.no_grad():
             positives = []
             negatives = []
             positives2 = []
             negatives2 = []
-            for i in tqdm(range(self.iterations)):
+            for i in tqdm(range(iterations)):
                 medium = random.choice(MEDIUMS)
                 subject = random.choice(SUBJECTS)
                 pos_prompt = f"a {medium} of a {target_word} {subject}"
