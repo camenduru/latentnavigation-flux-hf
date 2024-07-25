@@ -1,5 +1,7 @@
 import gradio as gr
+import spaces
 
+@spaces.GPU
 def generate(slider_x, slider_y, prompt):
     comma_concepts_x = ', '.join(slider_x)
     comma_concepts_y = ', '.join(slider_y)
