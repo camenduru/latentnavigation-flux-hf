@@ -25,8 +25,7 @@ def generate(slider_x, slider_y, prompt, x_concept_1, x_concept_2, y_concept_1, 
 
     image = clip_slider.generate(prompt, scale=0, scale_2nd=0, num_inference_steps=8, avg_diff=avg_diff_x, avg_diff_2nd=avg_diff_y)
   
-    return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), 
-    x_concept_1, x_concept_2, y_concept_1, y_concept_2,  avg_diff_x, avg_diff_y, image
+    return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), x_concept_1, x_concept_2, y_concept_1, y_concept_2,  avg_diff_x, avg_diff_y, image
 
 def update_x(x,y,prompt, avg_diff_x, avg_diff_y):
   image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=8, avg_diff=avg_diff_x, avg_diff_2nd=avg_diff_y) 
