@@ -245,7 +245,7 @@ class CLIPSliderXL(CLIPSlider):
                     if avg_diff_2nd:
                         prompt_embeds[:, toks.argmax()] += avg_diff_2nd[0] * scale_2nd
                 else:
-                    print(avg_diff)
+                    
                     normed_prompt_embeds = prompt_embeds / prompt_embeds.norm(dim=-1, keepdim=True)
                     sims = normed_prompt_embeds[0] @ normed_prompt_embeds[0].T
 
