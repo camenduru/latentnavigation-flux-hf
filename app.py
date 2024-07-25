@@ -17,14 +17,14 @@ def generate(slider_x, slider_y, prompt,
 
     # check if avg diff for directions need to be re-calculated
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]):
-        clip_slider.avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1])
+        avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1])
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
 
     if not sorted(slider_y) == sorted([y_concept_1, y_concept_2]):
-        clip_slider.avg_diff_2nd = clip_slider.find_latent_direction(slider_y[0], slider_y[1])
+        avg_diff_2nd = clip_slider.find_latent_direction(slider_y[0], slider_y[1])
         y_concept_1, y_concept_2 = slider_y[0], slider_y[1]
     
-    image = clip_slider.generate(prompt, scale=0, scale_2nd=0, num_inference_steps=8)
+    image = clip_slider.generate(prompt, scale=0, scale_2nd=0, num_inference_steps=8, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
     comma_concepts_x = ', '.join(slider_x)
     comma_concepts_y = ', '.join(slider_y)
 
@@ -36,11 +36,15 @@ def generate(slider_x, slider_y, prompt,
     return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, image
 
 def update_x(x,y,prompt, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2):
-  image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=8) 
+    avg_diff = [avg_diff_x_1.cuda(), avg_diff_x_2.cuda()] 
+    avg_diff_2nd = [avg_diff_y_1.cuda(), avg_diff_y_2.cuda()]
+    image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=8, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
   return image
 
 def update_y(x,y,prompt, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2):
-  image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=8) 
+    avg_diff = [avg_diff_x_1.cuda(), avg_diff_x_2.cuda()] 
+    avg_diff_2nd = [avg_diff_y_1.cuda(), avg_diff_y_2.cuda()]
+    image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=8, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
   return image
   
 css = '''
