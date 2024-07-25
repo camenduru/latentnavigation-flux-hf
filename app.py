@@ -30,7 +30,7 @@ css = '''
 #y {
     position: absolute;
     bottom: 20px;
-    left: 190px;
+    left: 67px;
     width: 400px;
     transform: rotate(-90deg);
     transform-origin: left bottom;
