@@ -10,7 +10,7 @@ flash_pipe.scheduler = EulerDiscreteScheduler.from_config(flash_pipe.scheduler.c
 clip_slider = CLIPSliderXL(flash_pipe, device=torch.device("cuda"), iterations=50)
 
 @spaces.GPU
-def generate(slider_x, slider_y, prompt, x_concept_1, x_concept_2, y_concept_1, y_concept_2, , avg_diff_x, avg_diff_y):
+def generate(slider_x, slider_y, prompt, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y):
 
     # check if avg diff for directions need to be re-calculated
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]):
