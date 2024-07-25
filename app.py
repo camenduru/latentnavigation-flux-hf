@@ -39,13 +39,13 @@ def update_x(x,y,prompt, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2)
     avg_diff = [avg_diff_x_1.cuda(), avg_diff_x_2.cuda()] 
     avg_diff_2nd = [avg_diff_y_1.cuda(), avg_diff_y_2.cuda()]
     image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=8, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
-  return image
+    return image
 
 def update_y(x,y,prompt, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2):
     avg_diff = [avg_diff_x_1.cuda(), avg_diff_x_2.cuda()] 
     avg_diff_2nd = [avg_diff_y_1.cuda(), avg_diff_y_2.cuda()]
     image = clip_slider.generate(prompt, scale=x, scale_2nd=y, num_inference_steps=8, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
-  return image
+    return image
   
 css = '''
 #group {
