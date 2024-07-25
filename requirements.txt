@@ -1,1 +1,5 @@
 git+https://github.com/linoytsaban/semantic-sliders.git
+diffusers
+transformers
+peft
+accelerate
