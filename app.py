@@ -44,7 +44,6 @@ with gr.Blocks(css=css) as demo:
             slider_y = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             prompt = gr.Textbox(label="Prompt")
             submit = gr.Button("Submit")
-    with gr.Row():
         with gr.Group(elem_id="group"):
           x = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
           y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
