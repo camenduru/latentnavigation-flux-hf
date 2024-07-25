@@ -48,9 +48,9 @@ class CLIPSlider:
                 pos_prompt = f"a {medium} of a {target_word} {subject}"
                 neg_prompt = f"a {medium} of a {opposite} {subject}"
                 pos_toks = self.pipe.tokenizer(pos_prompt, return_tensors="pt", padding="max_length", truncation=True,
-                                          max_length=self.pipe.tokenizer.model_max_length).input_ids.to(self.pipe.device)
+                                          max_length=self.pipe.tokenizer.model_max_length).input_ids.cuda()
                 neg_toks = self.pipe.tokenizer(neg_prompt, return_tensors="pt", padding="max_length", truncation=True,
-                                          max_length=self.pipe.tokenizer.model_max_length).input_ids.to(self.pipe.device)
+                                          max_length=self.pipe.tokenizer.model_max_length).input_ids.cuda()
                 pos = self.pipe.text_encoder(pos_toks).pooler_output
                 neg = self.pipe.text_encoder(neg_toks).pooler_output
                 positives.append(pos)
@@ -82,7 +82,7 @@ class CLIPSlider:
 
         with torch.no_grad():
             toks = self.pipe.tokenizer(prompt, return_tensors="pt", padding="max_length", truncation=True,
-                                  max_length=self.pipe.tokenizer.model_max_length).input_ids.to(self.pipe.device)
+                                  max_length=self.pipe.tokenizer.model_max_length).input_ids.cuda()
         prompt_embeds = self.pipe.text_encoder(toks).last_hidden_state
 
         if avg_diff_2nd and normalize_scales:
@@ -164,18 +164,18 @@ class CLIPSliderXL(CLIPSlider):
                 neg_prompt = f"a {medium} of a {opposite} {subject}"
 
                 pos_toks = self.pipe.tokenizer(pos_prompt, return_tensors="pt", padding="max_length", truncation=True,
-                                          max_length=self.pipe.tokenizer.model_max_length).input_ids
+                                          max_length=self.pipe.tokenizer.model_max_length).input_ids.cuda()
                 neg_toks = self.pipe.tokenizer(neg_prompt, return_tensors="pt", padding="max_length", truncation=True,
-                                          max_length=self.pipe.tokenizer.model_max_length).input_ids
+                                          max_length=self.pipe.tokenizer.model_max_length).input_ids.cuda()
                 pos = self.pipe.text_encoder(pos_toks).pooler_output
                 neg = self.pipe.text_encoder(neg_toks).pooler_output
                 positives.append(pos)
                 negatives.append(neg)
 
                 pos_toks2 = self.pipe.tokenizer_2(pos_prompt, return_tensors="pt", padding="max_length", truncation=True,
-                                             max_length=self.pipe.tokenizer_2.model_max_length).input_ids
+                                             max_length=self.pipe.tokenizer_2.model_max_length).input_ids.cuda()
                 neg_toks2 = self.pipe.tokenizer_2(neg_prompt, return_tensors="pt", padding="max_length", truncation=True,
-                                             max_length=self.pipe.tokenizer_2.model_max_length).input_ids
+                                             max_length=self.pipe.tokenizer_2.model_max_length).input_ids.cuda()
                 pos2 = self.pipe.text_encoder_2(pos_toks2).text_embeds
                 neg2 = self.pipe.text_encoder_2(neg_toks2).text_embeds
                 positives2.append(pos2)
@@ -303,18 +303,18 @@ class CLIPSlider3(CLIPSlider):
                 neg_prompt = f"a {medium} of a {opposite} {subject}"
 
                 pos_toks = self.pipe.tokenizer(pos_prompt, return_tensors="pt", padding="max_length", truncation=True,
-                                          max_length=self.pipe.tokenizer.model_max_length).input_ids.to(self.pipe.device)
+                                          max_length=self.pipe.tokenizer.model_max_length).input_ids.cuda()
                 neg_toks = self.pipe.tokenizer(neg_prompt, return_tensors="pt", padding="max_length", truncation=True,
-                                          max_length=self.pipe.tokenizer.model_max_length).input_ids.to(self.pipe.device)
+                                          max_length=self.pipe.tokenizer.model_max_length).input_ids.cuda()
                 pos = self.pipe.text_encoder(pos_toks).text_embeds
                 neg = self.pipe.text_encoder(neg_toks).text_embeds
                 positives.append(pos)
                 negatives.append(neg)
 
                 pos_toks2 = self.pipe.tokenizer_2(pos_prompt, return_tensors="pt", padding="max_length", truncation=True,
-                                             max_length=self.pipe.tokenizer_2.model_max_length).input_ids.to(self.pipe.device)
+                                             max_length=self.pipe.tokenizer_2.model_max_length).input_ids.cuda()
                 neg_toks2 = self.pipe.tokenizer_2(neg_prompt, return_tensors="pt", padding="max_length", truncation=True,
-                                             max_length=self.pipe.tokenizer_2.model_max_length).input_ids.to(self.pipe.device)
+                                             max_length=self.pipe.tokenizer_2.model_max_length).input_ids.cuda()
                 pos2 = self.pipe.text_encoder_2(pos_toks2).text_embeds
                 neg2 = self.pipe.text_encoder_2(neg_toks2).text_embeds
                 positives2.append(pos2)
