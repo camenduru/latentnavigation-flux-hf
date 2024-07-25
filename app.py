@@ -4,6 +4,7 @@ import torch
 from clip_slider_pipeline import CLIPSliderXL
 from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler,  AutoencoderKL
 import time
+import numpy as np
 
 #vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
 flash_pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
