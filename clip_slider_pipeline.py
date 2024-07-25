@@ -4,7 +4,7 @@ import random
 from tqdm import tqdm
 from constants import SUBJECTS, MEDIUMS
 from PIL import Image
-
+import time
 class CLIPSlider:
     def __init__(
             self,
@@ -214,7 +214,7 @@ class CLIPSliderXL(CLIPSlider):
         ):
         # if doing full sequence, [-0.3,0.3] work well, higher if correlation weighted is true
         # if pooler token only [-4,4] work well
-
+        start_time = time.time()
         text_encoders = [self.pipe.text_encoder, self.pipe.text_encoder_2]
         tokenizers = [self.pipe.tokenizer, self.pipe.tokenizer_2]
         with torch.no_grad():
@@ -282,9 +282,13 @@ class CLIPSliderXL(CLIPSlider):
 
             prompt_embeds = torch.concat(prompt_embeds_list, dim=-1)
             pooled_prompt_embeds = pooled_prompt_embeds.view(bs_embed, -1)
-
+            end_time = time.time()
+            print(f"generation time - before pipe: {end_time - start_time:.2f} ms")
             torch.manual_seed(seed)
+            start_time = time.time()
             image = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
                          **pipeline_kwargs).images[0]
+            end_time = time.time()
+            print(f"generation time - pipe: {end_time - start_time:.2f} ms")
 
         return image
