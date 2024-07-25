@@ -6,7 +6,7 @@ from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler
 
 
 flash_pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
-flash_pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
+flash_pipe.scheduler = EulerDiscreteScheduler.from_config(flash_pipe.scheduler.config)
 clip_slider = CLIPSliderXL(flash_pipe, device=torch.device("cuda"))
 
 @spaces.GPU
