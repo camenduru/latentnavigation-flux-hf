@@ -6,8 +6,8 @@ from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler,  Autoen
 import time
 import numpy as np
 
-#vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
-pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
+vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
+pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash", vae=vae).to("cuda", torch.float16)
 pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
 clip_slider = CLIPSliderXL(pipe, device=torch.device("cuda"))
 
