@@ -13,7 +13,7 @@ clip_slider = CLIPSliderXL(pipe, device=torch.device("cuda"))
 
 pipe_adapter = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
 pipe_adapter.scheduler = EulerDiscreteScheduler.from_config(pipe_adapter.scheduler.config)
-#pipe_adapter.load_ip_adapter("h94/IP-Adapter", subfolder="sdxl_models", weight_name="ip-adapter_sdxl.bin")
+pipe_adapter.load_ip_adapter("h94/IP-Adapter", subfolder="sdxl_models", weight_name="ip-adapter_sdxl.bin")
 # scale = 0.8
 # pipe_adapter.set_ip_adapter_scale(scale)
 
@@ -139,7 +139,7 @@ with gr.Blocks(css=css) as demo:
               output_image_a = gr.Image(elem_id="image_out")
         
         with gr.Accordion(label="advanced options", open=False):
-            iterations_a = gr.Slider(label = "num iterations", minimum=0, value=100, maximum=300)
+            iterations_a = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=300)
             steps_a = gr.Slider(label = "num inference steps", minimum=1, value=8, maximum=30)
             seed_a  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
