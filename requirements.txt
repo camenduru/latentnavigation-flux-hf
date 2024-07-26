@@ -2,3 +2,4 @@ diffusers
 transformers
 peft
 accelerate
+cv2
