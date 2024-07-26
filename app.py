@@ -31,10 +31,15 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]):
         avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations)
+        avg_diff[0].to(torch.float16)
+        avg_diff[1].to(torch.float16)
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
+    
     print("avg_diff[0].dtype", avg_diff[0].dtype)
     if not sorted(slider_y) == sorted([y_concept_1, y_concept_2]):
         avg_diff_2nd = clip_slider.find_latent_direction(slider_y[0], slider_y[1], num_iterations=iterations)
+        avg_diff_2nd[0].to(torch.float16)
+        avg_diff_2nd[1].to(torch.float16)
         y_concept_1, y_concept_2 = slider_y[0], slider_y[1]
     end_time = time.time()
     print(f"direction time: {end_time - start_time:.2f} ms")
@@ -119,11 +124,7 @@ with gr.Blocks(css=css) as demo:
             steps = gr.Slider(label = "num inference steps", minimum=1, value=8, maximum=30)
             seed  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
-        submit.click(fn=generate,
-                     inputs=[slider_x, slider_y, prompt, seed, iterations, steps, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
-                     outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image])
-        x.change(fn=update_x, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
-        y.change(fn=update_y, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
+       
     with gr.Tab(label="image2image"):
         with gr.Row():
             with gr.Column():
@@ -142,11 +143,16 @@ with gr.Blocks(css=css) as demo:
             steps_a = gr.Slider(label = "num inference steps", minimum=1, value=8, maximum=30)
             seed_a  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
-        submit.click(fn=generate,
+    submit.click(fn=generate,
+                     inputs=[slider_x, slider_y, prompt, seed, iterations, steps, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
+                     outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image])
+    x.change(fn=update_x, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
+    y.change(fn=update_y, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
+    submit_a.click(fn=generate,
                      inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
                      outputs=[x_a, y_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image_a])
-        x.change(fn=update_x, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image_a])
-        y.change(fn=update_y, inputs=[x_a,y_a, prompt, seed_a, steps_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image_a])
+    x_a.change(fn=update_x, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image_a])
+    y_a.change(fn=update_y, inputs=[x_a,y_a, prompt, seed_a, steps_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image_a])
 
         
 if __name__ == "__main__":
