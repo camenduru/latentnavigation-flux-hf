@@ -241,8 +241,8 @@ class CLIPSliderXL(CLIPSlider):
                 )
                 
                 # We are only ALWAYS interested in the pooled output of the final text encoder
-                pooled_prompt_embeds = prompt_embeds[0].to(torch.float16)                
-                prompt_embeds = prompt_embeds.hidden_states[-2].to(torch.float16)
+                pooled_prompt_embeds = prompt_embeds[0]            
+                prompt_embeds = prompt_embeds.hidden_states[-2]
                 print("prompt_embeds.dtype",prompt_embeds.dtype)
                 if avg_diff_2nd and normalize_scales:
                     denominator = abs(scale) + abs(scale_2nd)
@@ -286,7 +286,7 @@ class CLIPSliderXL(CLIPSlider):
             print(f"generation time - before pipe: {end_time - start_time:.2f} ms")
             torch.manual_seed(seed)
             start_time = time.time()
-            image = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
+            image = self.pipe(prompt_embeds=prompt_embeds.to(torch.float16), pooled_prompt_embeds=pooled_prompt_embeds.to(torch.float16),
                          **pipeline_kwargs).images[0]
             end_time = time.time()
             print(f"generation time - pipe: {end_time - start_time:.2f} ms")
