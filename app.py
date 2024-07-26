@@ -31,29 +31,29 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]):
         avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations)
-        avg_diff[0] = avg_diff[0].to(torch.float16)
-        avg_diff[1] = avg_diff[1].to(torch.float16)
+        avg_diff_0 = avg_diff[0].to(torch.float16)
+        avg_diff_1 = avg_diff[1].to(torch.float16)
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
     
     print("avg_diff[0].dtype", avg_diff[0].dtype)
     if not sorted(slider_y) == sorted([y_concept_1, y_concept_2]):
         avg_diff_2nd = clip_slider.find_latent_direction(slider_y[0], slider_y[1], num_iterations=iterations)
-        avg_diff_2nd[0] = avg_diff_2nd[0].to(torch.float16)
-        avg_diff_2nd[1] = avg_diff_2nd[1].to(torch.float16)
+        avg_diff_2nd_0 = avg_diff_2nd[0].to(torch.float16)
+        avg_diff_2nd_1 = avg_diff_2nd[1].to(torch.float16)
         y_concept_1, y_concept_2 = slider_y[0], slider_y[1]
     end_time = time.time()
     print(f"direction time: {end_time - start_time:.2f} ms")
     start_time = time.time()
-    image = clip_slider.generate(prompt, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
+    image = clip_slider.generate(prompt, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
     end_time = time.time()
     print(f"generation time: {end_time - start_time:.2f} ms")
     comma_concepts_x = ', '.join(slider_x)
     comma_concepts_y = ', '.join(slider_y)
 
-    avg_diff_x_1 = avg_diff[0].cpu()
-    avg_diff_x_2 = avg_diff[1].cpu()
-    avg_diff_y_1 = avg_diff_2nd[0].cpu()
-    avg_diff_y_2 = avg_diff_2nd[1].cpu()
+    avg_diff_x_1 = avg_diff_0.cpu()
+    avg_diff_x_2 = avg_diff_1.cpu()
+    avg_diff_y_1 = avg_diff_2nd_0.cpu()
+    avg_diff_y_2 = avg_diff_2nd_1.cpu()
   
     return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, image
 
