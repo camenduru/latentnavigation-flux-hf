@@ -236,14 +236,13 @@ class CLIPSliderXL(CLIPSlider):
                 toks = text_inputs.input_ids
 
                 prompt_embeds = text_encoder(
-                    toks.to(text_encoder.device, torch.float16),
+                    toks.to(text_encoder.device),
                     output_hidden_states=True,
                 )
                 
                 # We are only ALWAYS interested in the pooled output of the final text encoder
-                pooled_prompt_embeds = prompt_embeds[0]
-                
-                prompt_embeds = prompt_embeds.hidden_states[-2]
+                pooled_prompt_embeds = prompt_embeds[0].to(torch.float16)                
+                prompt_embeds = prompt_embeds.hidden_states[-2].to(torch.float16)
                 print("prompt_embeds.dtype",prompt_embeds.dtype)
                 if avg_diff_2nd and normalize_scales:
                     denominator = abs(scale) + abs(scale_2nd)
