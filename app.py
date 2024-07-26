@@ -61,11 +61,11 @@ clip_slider_controlnet = CLIPSliderXL(sd_pipe=pipe_controlnet,device=torch.devic
 
 
 @spaces.GPU(duration=120)
-def generate(slider_x, slider_y, prompt, seed, iterations, steps, 
+def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale,
              x_concept_1, x_concept_2, y_concept_1, y_concept_2, 
              avg_diff_x_1, avg_diff_x_2,
              avg_diff_y_1, avg_diff_y_2,
-             img2img_type = None, img = None,
+             img2img_type = None, img = None, 
              controlnet_scale= None, ip_adapter_scale=None):
     
     start_time = time.time()
@@ -93,11 +93,11 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
     
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
-        image = clip_slider.generate(prompt, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
+        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
     elif img2img_type=="ip adapter" and img is not None:
-        image = clip_slider.generate(prompt, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
+        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
     else: # text to image
-        image = clip_slider.generate(prompt, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
+        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
     
     end_time = time.time()
     print(f"generation time: {end_time - start_time:.2f} ms")
@@ -113,7 +113,7 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
     return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, image
 
 @spaces.GPU
-def update_scales(x,y,prompt,seed, steps, 
+def update_scales(x,y,prompt,seed, steps, guidance_scale,
                   avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, 
                   img2img_type = None, img = None,
                   controlnet_scale= None, ip_adapter_scale=None):
@@ -121,11 +121,11 @@ def update_scales(x,y,prompt,seed, steps,
     avg_diff_2nd = (avg_diff_y_1.cuda(), avg_diff_y_2.cuda())
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
-        image = clip_slider.generate(prompt, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     elif img2img_type=="ip adapter" and img is not None:
-        image = clip_slider.generate(prompt, ip_adapter_image=img, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     else:     
-        image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     return image
 
 @spaces.GPU
