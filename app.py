@@ -32,7 +32,7 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]):
         avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations)
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
-    print("avg_diff[0].dtype()", avg_diff[0].dtype())
+    print("avg_diff[0].dtype", avg_diff[0].dtype)
     if not sorted(slider_y) == sorted([y_concept_1, y_concept_2]):
         avg_diff_2nd = clip_slider.find_latent_direction(slider_y[0], slider_y[1], num_iterations=iterations)
         y_concept_1, y_concept_2 = slider_y[0], slider_y[1]
