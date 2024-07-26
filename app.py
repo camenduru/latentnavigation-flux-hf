@@ -113,10 +113,7 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
     return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, image
 
 @spaces.GPU
-def update_scales(x,y,prompt,seed, steps, 
-             avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2,
-             img2img_type = None,
-             img = None)
+def update_scales(x,y,prompt,seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, img2img_type = None, img = None)
     avg_diff = (avg_diff_x_1.cuda(), avg_diff_x_2.cuda())
     avg_diff_2nd = (avg_diff_y_1.cuda(), avg_diff_y_2.cuda())
     if img2img_type=="controlnet canny" and img is not None:
