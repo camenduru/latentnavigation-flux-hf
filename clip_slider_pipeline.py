@@ -239,7 +239,7 @@ class CLIPSliderXL(CLIPSlider):
                     toks.to(text_encoder.device),
                     output_hidden_states=True,
                 )
-
+                print("prompt_embeds.dtype",prompt_embeds.dtype)
                 # We are only ALWAYS interested in the pooled output of the final text encoder
                 pooled_prompt_embeds = prompt_embeds[0]
                 prompt_embeds = prompt_embeds.hidden_states[-2]
