@@ -35,7 +35,7 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
         avg_diff_1 = avg_diff[1].to(torch.float16)
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
     
-    print("avg_diff[0].dtype", avg_diff[0].dtype)
+    print("avg_diff_0", avg_diff_0.dtype)
     if not sorted(slider_y) == sorted([y_concept_1, y_concept_2]):
         avg_diff_2nd = clip_slider.find_latent_direction(slider_y[0], slider_y[1], num_iterations=iterations)
         avg_diff_2nd_0 = avg_diff_2nd[0].to(torch.float16)
