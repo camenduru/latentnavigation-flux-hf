@@ -18,7 +18,7 @@ class CLIPSlider:
     ):
 
         self.device = device
-        self.pipe = sd_pipe.to(self.device)
+        self.pipe = sd_pipe.to(self.device, torch.float16)
         self.iterations = iterations
         if target_word != "" or opposite != "":
             self.avg_diff = self.find_latent_direction(target_word, opposite)
@@ -280,13 +280,14 @@ class CLIPSliderXL(CLIPSlider):
                 prompt_embeds = prompt_embeds.view(bs_embed, seq_len, -1)
                 prompt_embeds_list.append(prompt_embeds)
 
-            prompt_embeds = torch.concat(prompt_embeds_list, dim=-1)
-            pooled_prompt_embeds = pooled_prompt_embeds.view(bs_embed, -1)
+            prompt_embeds = torch.concat(prompt_embeds_list, dim=-1).to(torch.float16)
+            pooled_prompt_embeds = pooled_prompt_embeds.view(bs_embed, -1).to(torch.float16)
             end_time = time.time()
+            print("prompt_embeds", prompt_embeds.dtype)
             print(f"generation time - before pipe: {end_time - start_time:.2f} ms")
             torch.manual_seed(seed)
             start_time = time.time()
-            image = self.pipe(prompt_embeds=prompt_embeds.to(torch.float16), pooled_prompt_embeds=pooled_prompt_embeds.to(torch.float16),
+            image = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
                          **pipeline_kwargs).images[0]
             end_time = time.time()
             print(f"generation time - pipe: {end_time - start_time:.2f} ms")
