@@ -2,10 +2,33 @@ import gradio as gr
 import spaces
 import torch
 from clip_slider_pipeline import CLIPSliderXL
-from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler,  AutoencoderKL
+from diffusers import StableDiffusionXLPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, EulerDiscreteScheduler,  AutoencoderKL
 import time
 import numpy as np
+import cv2
+from PIL import Image
 
+
+def HWC3(x):
+    assert x.dtype == np.uint8
+    if x.ndim == 2:
+        x = x[:, :, None]
+    assert x.ndim == 3
+    H, W, C = x.shape
+    assert C == 1 or C == 3 or C == 4
+    if C == 3:
+        return x
+    if C == 1:
+        return np.concatenate([x, x, x], axis=2)
+    if C == 4:
+        color = x[:, :, 0:3].astype(np.float32)
+        alpha = x[:, :, 3:4].astype(np.float32) / 255.0
+        y = color * alpha + 255.0 * (1.0 - alpha)
+        y = y.clip(0, 255).astype(np.uint8)
+        return y
+
+
+# load pipelines
 vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
 pipe = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash", vae=vae).to("cuda", torch.float16)
 pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
@@ -13,18 +36,32 @@ clip_slider = CLIPSliderXL(pipe, device=torch.device("cuda"))
 
 pipe_adapter = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
 pipe_adapter.scheduler = EulerDiscreteScheduler.from_config(pipe_adapter.scheduler.config)
-pipe_adapter.load_ip_adapter("h94/IP-Adapter", subfolder="sdxl_models", weight_name="ip-adapter_sdxl.bin")
+#pipe_adapter.load_ip_adapter("h94/IP-Adapter", subfolder="sdxl_models", weight_name="ip-adapter_sdxl.bin")
 # scale = 0.8
 # pipe_adapter.set_ip_adapter_scale(scale)
+clip_slider_ip = CLIPSliderXL(sd_pipe=pipe_adapter, device=torch.device("cuda"))
 
-clip_slider_ip = CLIPSliderXL(sd_pipe=pipe_adapter, 
-                    device=torch.device("cuda"))
+controlnet = ControlNetModel.from_pretrained(
+    "xinsir/controlnet-canny-sdxl-1.0", # insert here your choice of controlnet
+    torch_dtype=torch.float16
+)
+vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
+pipe_controlnet = StableDiffusionXLControlNetPipeline.from_pretrained(
+    "sd-community/sdxl-flash",
+    controlnet=controlnet,
+    vae=vae,
+    torch_dtype=torch.float16,
+)
+clip_slider_controlnet = CLIPSliderXL(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
+
 
 @spaces.GPU(duration=120)
 def generate(slider_x, slider_y, prompt, seed, iterations, steps, 
              x_concept_1, x_concept_2, y_concept_1, y_concept_2, 
              avg_diff_x_1, avg_diff_x_2,
-             avg_diff_y_1, avg_diff_y_2):
+             avg_diff_y_1, avg_diff_y_2
+             img2img_type = None,
+             img = None):
     start_time = time.time()
     # check if avg diff for directions need to be re-calculated
     print("slider_x", slider_x)
@@ -131,6 +168,7 @@ with gr.Blocks(css=css) as demo:
                 image = gr.ImageEditor(type="pil", image_mode="L", crop_size=(512, 512))
                 slider_x_a = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
                 slider_y_a = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
+                img2img_type = gr.Radio(["controlnet canny", "ip adapter"], label="", info="")
                 prompt_a = gr.Textbox(label="Prompt")
                 submit_a = gr.Button("Submit")
             with gr.Group(elem_id="group"):
