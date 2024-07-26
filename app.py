@@ -20,7 +20,7 @@ pipe_adapter.scheduler = EulerDiscreteScheduler.from_config(pipe_adapter.schedul
 clip_slider_ip = CLIPSliderXL(sd_pipe=pipe_adapter, 
                     device=torch.device("cuda"))
 
-@spaces.GPU
+@spaces.GPU(duration=120)
 def generate(slider_x, slider_y, prompt, seed, iterations, steps, 
              x_concept_1, x_concept_2, y_concept_1, y_concept_2, 
              avg_diff_x_1, avg_diff_x_2,
