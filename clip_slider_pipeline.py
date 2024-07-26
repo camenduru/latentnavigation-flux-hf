@@ -236,7 +236,7 @@ class CLIPSliderXL(CLIPSlider):
                 toks = text_inputs.input_ids
 
                 prompt_embeds = text_encoder(
-                    toks.to(text_encoder.device),
+                    toks.to(text_encoder.device, torch.float16),
                     output_hidden_states=True,
                 )
                 
