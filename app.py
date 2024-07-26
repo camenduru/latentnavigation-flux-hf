@@ -65,8 +65,8 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
              x_concept_1, x_concept_2, y_concept_1, y_concept_2, 
              avg_diff_x_1, avg_diff_x_2,
              avg_diff_y_1, avg_diff_y_2,
-             img2img_type = None,
-             img = None):
+             img2img_type = None, img = None,
+             controlnet_scale= None, ip_adapter_scale=None):
     
     start_time = time.time()
     # check if avg diff for directions need to be re-calculated
@@ -93,7 +93,7 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
     
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
-        image = clip_slider.generate(prompt, image=control_img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
+        image = clip_slider.generate(prompt, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
     elif img2img_type=="ip adapter" and img is not None:
         image = clip_slider.generate(prompt, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
     else: # text to image
@@ -115,12 +115,13 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
 @spaces.GPU
 def update_scales(x,y,prompt,seed, steps, 
                   avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, 
-                  img2img_type = None, img = None):
+                  img2img_type = None, img = None,
+                  controlnet_scale= None, ip_adapter_scale=None):
     avg_diff = (avg_diff_x_1.cuda(), avg_diff_x_2.cuda())
     avg_diff_2nd = (avg_diff_y_1.cuda(), avg_diff_y_2.cuda())
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
-        image = clip_slider.generate(prompt, image=control_img, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+        image = clip_slider.generate(prompt, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     elif img2img_type=="ip adapter" and img is not None:
         image = clip_slider.generate(prompt, ip_adapter_image=img, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     else:     
@@ -191,13 +192,20 @@ with gr.Blocks(css=css) as demo:
                 prompt = gr.Textbox(label="Prompt")
                 submit = gr.Button("Submit")
             with gr.Group(elem_id="group"):
-              x = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
-              y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
+              x = gr.Slider(minimum=-7, value=0, maximum=7, elem_id="x", interactive=False)
+              y = gr.Slider(minimum=-7, value=0, maximum=7, elem_id="y", interactive=False)
               output_image = gr.Image(elem_id="image_out")
         
         with gr.Accordion(label="advanced options", open=False):
-            iterations = gr.Slider(label = "num iterations", minimum=0, value=100, maximum=300)
+            iterations = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=400)
             steps = gr.Slider(label = "num inference steps", minimum=1, value=8, maximum=30)
+            guidance_scale = gr.Slider(
+                    label="Guidance scale",
+                    minimum=0.1,
+                    maximum=10.0,
+                    step=0.1,
+                    value=5,
+                )
             seed  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
        
@@ -218,18 +226,39 @@ with gr.Blocks(css=css) as demo:
         with gr.Accordion(label="advanced options", open=False):
             iterations_a = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=300)
             steps_a = gr.Slider(label = "num inference steps", minimum=1, value=8, maximum=30)
+            guidance_scale_a = gr.Slider(
+                    label="Guidance scale",
+                    minimum=0.1,
+                    maximum=10.0,
+                    step=0.1,
+                    value=5,
+                )
+            controlnet_conditioning_scale = gr.Slider(
+                    label="controlnet conditioning scale",
+                    minimum=0.5,
+                    maximum=5.0,
+                    step=0.1,
+                    value=0.7,
+                )
+            ip_adapter_scale = gr.Slider(
+                    label="ip adapter scale",
+                    minimum=0.5,
+                    maximum=5.0,
+                    step=0.1,
+                    value=0.8,
+                )
             seed_a  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
     submit.click(fn=generate,
-                     inputs=[slider_x, slider_y, prompt, seed, iterations, steps, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
+                     inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
                      outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image])
-    x.change(fn=update_scales, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
-    y.change(fn=update_scales, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
+    x.change(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
+    y.change(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
     submit_a.click(fn=generate,
-                     inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
+                     inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, guidance_scale_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale],
                      outputs=[x_a, y_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image_a])
-    x_a.change(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image_a])
-    y_a.change(fn=update_scales, inputs=[x_a,y_a, prompt, seed_a, steps_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image_a])
+    x_a.change(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
+    y_a.change(fn=update_scales, inputs=[x_a,y_a, prompt, seed_a, steps_a, guidance_scale_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
 
         
 if __name__ == "__main__":
