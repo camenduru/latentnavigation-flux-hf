@@ -27,6 +27,11 @@ def HWC3(x):
         y = y.clip(0, 255).astype(np.uint8)
         return y
 
+def process_controlnet_img(image):
+    controlnet_img = np.array(image)
+    controlnet_img = cv2.Canny(controlnet_img, 100, 200)
+    controlnet_img = HWC3(controlnet_img)
+    controlnet_img = Image.fromarray(controlnet_img)
 
 # load pipelines
 vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
@@ -62,10 +67,12 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
              avg_diff_y_1, avg_diff_y_2,
              img2img_type = None,
              img = None):
+    
     start_time = time.time()
     # check if avg diff for directions need to be re-calculated
     print("slider_x", slider_x)
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
+    
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]):
         avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations)
         avg_diff_0 = avg_diff[0].to(torch.float16)
@@ -73,6 +80,7 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
     
     print("avg_diff_0", avg_diff_0.dtype)
+    
     if not sorted(slider_y) == sorted([y_concept_1, y_concept_2]):
         avg_diff_2nd = clip_slider.find_latent_direction(slider_y[0], slider_y[1], num_iterations=iterations)
         avg_diff_2nd_0 = avg_diff_2nd[0].to(torch.float16)
@@ -80,10 +88,20 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
         y_concept_1, y_concept_2 = slider_y[0], slider_y[1]
     end_time = time.time()
     print(f"direction time: {end_time - start_time:.2f} ms")
+    
     start_time = time.time()
-    image = clip_slider.generate(prompt, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
+    
+    if img2img_type=="controlnet canny" and img is not None:
+        control_img = process_controlnet_img(img)
+        image = clip_slider.generate(prompt, image=control_img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
+    elif img2img_type=="ip adapter" and img is not None:
+        image = clip_slider.generate(prompt, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
+    else: # text to image
+        image = clip_slider.generate(prompt, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
+    
     end_time = time.time()
     print(f"generation time: {end_time - start_time:.2f} ms")
+    
     comma_concepts_x = ', '.join(slider_x)
     comma_concepts_y = ', '.join(slider_y)
 
@@ -95,14 +113,36 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps,
     return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, image
 
 @spaces.GPU
-def update_x(x,y,prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2):
+def update_scales(x,y,prompt,seed, steps, 
+             avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2,
+             img2img_type = None,
+             img = None)
+    avg_diff = (avg_diff_x_1.cuda(), avg_diff_x_2.cuda())
+    avg_diff_2nd = (avg_diff_y_1.cuda(), avg_diff_y_2.cuda())
+    if img2img_type=="controlnet canny" and img is not None:
+        control_img = process_controlnet_img(img)
+        image = clip_slider.generate(prompt, image=control_img, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+    elif img2img_type=="ip adapter" and img is not None:
+        image = clip_slider.generate(prompt, ip_adapter_image=img, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+    else:     
+        image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+    return image
+
+@spaces.GPU
+def update_x(x,y,prompt,seed, steps, 
+             avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2,
+             img2img_type = None,
+             img = None):
     avg_diff = (avg_diff_x_1.cuda(), avg_diff_x_2.cuda())
     avg_diff_2nd = (avg_diff_y_1.cuda(), avg_diff_y_2.cuda())
     image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     return image
 
 @spaces.GPU
-def update_y(x,y,prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2):
+def update_y(x,y,prompt, seed, steps, 
+            avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2,
+            img2img_type = None,
+            img = None):
     avg_diff = (avg_diff_x_1.cuda(), avg_diff_x_2.cuda())
     avg_diff_2nd = (avg_diff_y_1.cuda(), avg_diff_y_2.cuda())
     image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
@@ -144,7 +184,7 @@ with gr.Blocks(css=css) as demo:
     avg_diff_y_1 = gr.State()
     avg_diff_y_2 = gr.State()
     
-    with gr.Tab(""):
+    with gr.Tab("text2image"):
         with gr.Row():
             with gr.Column():
                 slider_x = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
@@ -184,13 +224,13 @@ with gr.Blocks(css=css) as demo:
     submit.click(fn=generate,
                      inputs=[slider_x, slider_y, prompt, seed, iterations, steps, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
                      outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image])
-    x.change(fn=update_x, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
-    y.change(fn=update_y, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
+    x.change(fn=update_scales, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
+    y.change(fn=update_scales, inputs=[x,y, prompt, seed, steps, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
     submit_a.click(fn=generate,
                      inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
                      outputs=[x_a, y_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image_a])
-    x_a.change(fn=update_x, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image_a])
-    y_a.change(fn=update_y, inputs=[x_a,y_a, prompt, seed_a, steps_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image_a])
+    x_a.change(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image_a])
+    y_a.change(fn=update_scales, inputs=[x_a,y_a, prompt, seed_a, steps_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image_a])
 
         
 if __name__ == "__main__":
