@@ -59,7 +59,7 @@ clip_slider_controlnet = CLIPSliderXL(sd_pipe=pipe_controlnet,device=torch.devic
 def generate(slider_x, slider_y, prompt, seed, iterations, steps, 
              x_concept_1, x_concept_2, y_concept_1, y_concept_2, 
              avg_diff_x_1, avg_diff_x_2,
-             avg_diff_y_1, avg_diff_y_2
+             avg_diff_y_1, avg_diff_y_2,
              img2img_type = None,
              img = None):
     start_time = time.time()
