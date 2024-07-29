@@ -191,12 +191,12 @@ with gr.Blocks(css=css) as demo:
                 slider_y = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
                 prompt = gr.Textbox(label="Prompt")
                 submit = gr.Button("find directions")
-            with gr.Group(elem_id="group"):
-              x = gr.Slider(minimum=-7, value=0, maximum=7, elem_id="x", interactive=False)
-              y = gr.Slider(minimum=-7, value=0, maximum=7, elem_id="y", interactive=False)
-              output_image = gr.Image(elem_id="image_out")
-              with gr.Row():
-                generate_butt = gr.Button("generate")
+            with gr.Column():
+                with gr.Group(elem_id="group"):
+                  x = gr.Slider(minimum=-7, value=0, maximum=7, elem_id="x", interactive=False)
+                  y = gr.Slider(minimum=-7, value=0, maximum=7, elem_id="y", interactive=False)
+                  output_image = gr.Image(elem_id="image_out")
+            generate_butt = gr.Button("generate")
         
         with gr.Accordion(label="advanced options", open=False):
             iterations = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=400)
@@ -220,12 +220,12 @@ with gr.Blocks(css=css) as demo:
                 img2img_type = gr.Radio(["controlnet canny", "ip adapter"], label="", info="")
                 prompt_a = gr.Textbox(label="Prompt")
                 submit_a = gr.Button("Submit")
-            with gr.Group(elem_id="group"):
-              x_a = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
-              y_a = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
-              output_image_a = gr.Image(elem_id="image_out")
-              with gr.Row():
-                generate_butt_a = gr.Button("generate")
+            with gr.Column():
+                with gr.Group(elem_id="group"):
+                  x_a = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
+                  y_a = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
+                  output_image_a = gr.Image(elem_id="image_out")
+            generate_butt_a = gr.Button("generate")
         
         with gr.Accordion(label="advanced options", open=False):
             iterations_a = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=300)
