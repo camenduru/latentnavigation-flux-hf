@@ -7,7 +7,7 @@ import time
 import numpy as np
 import cv2
 from PIL import Image
-
+from ledits.pipeline_leditspp_stable_diffusion_xl import LEditsPPPipelineStableDiffusionXL
 
 def HWC3(x):
     assert x.dtype == np.uint8
@@ -59,6 +59,11 @@ pipe_controlnet = StableDiffusionXLControlNetPipeline.from_pretrained(
 )
 clip_slider_controlnet = CLIPSliderXL(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
 
+pipe_inv = LEditsPPPipelineStableDiffusionXL.from_pretrained(
+    "stabilityai/stable-diffusion-xl-base-1.0", vae=vae,
+    torch_dtype=torch.float16
+)
+clip_slider_inv = CLIPSliderXL(sd_pipe=pipe_inv,device=torch.device("cuda"))
 
 @spaces.GPU(duration=120)
 def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale,
