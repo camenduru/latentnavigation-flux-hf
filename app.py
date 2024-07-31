@@ -1475,6 +1475,7 @@ class LEditsPPPipelineStableDiffusionXL(
 
     @torch.no_grad()
     # Modified from diffusers.pipelines.ledits_pp.pipeline_leditspp_stable_diffusion.LEditsPPPipelineStableDiffusion.encode_image
+    @spaces.GPU
     def encode_image(self, image, dtype=None, height=None, width=None, resize_mode="default", crops_coords=None):
         image = self.image_processor.preprocess(
             image=image, height=height, width=width, resize_mode=resize_mode, crops_coords=crops_coords
@@ -1722,6 +1723,7 @@ class LEditsPPPipelineStableDiffusionXL(
 
 
 # Copied from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl.rescale_noise_cfg
+@spaces.GPU
 def rescale_noise_cfg(noise_cfg, noise_pred_text, guidance_rescale=0.0):
     """
     Rescale `noise_cfg` according to `guidance_rescale`. Based on findings of [Common Diffusion Noise Schedules and
@@ -1776,6 +1778,7 @@ def compute_noise_ddim(scheduler, prev_latents, latents, timestep, noise_pred, e
 
 
 # Copied from diffusers.pipelines.ledits_pp.pipeline_leditspp_stable_diffusion.compute_noise_sde_dpm_pp_2nd
+@spaces.GPU
 def compute_noise_sde_dpm_pp_2nd(scheduler, prev_latents, latents, timestep, noise_pred, eta):
     def first_order_update(model_output, sample):  # timestep, prev_timestep, sample):
         sigma_t, sigma_s = scheduler.sigmas[scheduler.step_index + 1], scheduler.sigmas[scheduler.step_index]
@@ -1861,6 +1864,7 @@ def compute_noise_sde_dpm_pp_2nd(scheduler, prev_latents, latents, timestep, noi
 
 
 # Copied from diffusers.pipelines.ledits_pp.pipeline_leditspp_stable_diffusion.compute_noise
+@spaces.GPU
 def compute_noise(scheduler, *args):
     if isinstance(scheduler, DDIMScheduler):
         return compute_noise_ddim(scheduler, *args)
