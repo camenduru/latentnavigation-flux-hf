@@ -882,6 +882,8 @@ class LEditsPPPipelineStableDiffusionXL(
         avg_diff_2 = None,
         correlation_weight_factor = 0.7,
         scale=2,
+        init_latents: [torch.Tensor] = None,
+        zs: [torch.Tensor] = None,
         **kwargs,
     ):
         r"""
@@ -1014,9 +1016,10 @@ class LEditsPPPipelineStableDiffusionXL(
 
         eta = self.eta
         num_images_per_prompt = 1
-        latents = self.init_latents
+        #latents = self.init_latents
+        latents = init_latents
 
-        zs = self.zs
+        #zs = self.zs
         self.scheduler.set_timesteps(len(self.scheduler.timesteps))
 
         if use_intersect_mask:
@@ -1094,6 +1097,7 @@ class LEditsPPPipelineStableDiffusionXL(
         # self.scheduler.set_timesteps(num_inference_steps, device=device)
 
         timesteps = self.inversion_steps
+        timesteps = inversion_steps
         t_to_idx = {int(v): k for k, v in enumerate(timesteps)}
 
         if use_cross_attn_mask:
@@ -1698,7 +1702,8 @@ class LEditsPPPipelineStableDiffusionXL(
         if num_zero_noise_steps > 0:
             zs[-num_zero_noise_steps:] = torch.zeros_like(zs[-num_zero_noise_steps:])
         self.zs = zs
-        return LEditsPPInversionPipelineOutput(images=resized, vae_reconstruction_images=image_rec)
+        #return LEditsPPInversionPipelineOutput(images=resized, vae_reconstruction_images=image_rec)
+        return xts[-1], zs
 
 
 # Copied from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl.rescale_noise_cfg
