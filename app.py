@@ -125,7 +125,9 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale
 def update_scales(x,y,prompt,seed, steps, guidance_scale,
                   avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, 
                   img2img_type = None, img = None,
-                  controlnet_scale= None, ip_adapter_scale=None):
+                  controlnet_scale= None, ip_adapter_scale=None,
+                  edit_threshold=None, edit_guidance_scale = None,
+                  init_latents=None, zs=None):
     avg_diff = (avg_diff_x_1.cuda(), avg_diff_x_2.cuda())
     avg_diff_2nd = (avg_diff_y_1.cuda(), avg_diff_y_2.cuda())
     if img2img_type=="controlnet canny" and img is not None:
@@ -133,6 +135,8 @@ def update_scales(x,y,prompt,seed, steps, guidance_scale,
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     elif img2img_type=="ip adapter" and img is not None:
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+    elif img2img_type=="inversion":
+        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1), init_latents = init_latents, zs=zs)
     else:     
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     return image
@@ -331,7 +335,7 @@ with gr.Blocks(css=css) as demo:
 
     image_inv.change(fn=reset_do_inversion, outputs=[do_inversion]).then(fn=invert, inputs=[image_inv], outputs=[init_latents,zs])
     submit_inv.click(fn=generate,
-                     inputs=[slider_x_inv, slider_y_inv, prompt_inv, seed_inv, iterations_inv, steps_inv, guidance_scale_inv, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
+                     inputs=[slider_x_inv, slider_y_inv, prompt_inv, seed_inv, iterations_inv, steps_inv, guidance_scale_inv, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, img2img_type_inv, image, controlnet_conditioning_scale, ip_adapter_scale ,edit_threshold, edit_guidance_scale, init_latents, zs],
                      outputs=[x_inv, y_inv, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image_inv])
     
     generate_butt.click(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
