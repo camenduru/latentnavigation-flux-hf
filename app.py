@@ -1718,9 +1718,10 @@ class LEditsPPPipelineStableDiffusionXL(
 
         #self.init_latents = xts[-1]
         zs = zs.flip(0)
-
+        print("post 3")
         if num_zero_noise_steps > 0:
             zs[-num_zero_noise_steps:] = torch.zeros_like(zs[-num_zero_noise_steps:])
+        print("post 4")
         #self.zs = zs
         #return LEditsPPInversionPipelineOutput(images=resized, vae_reconstruction_images=image_rec)
         return xts[-1], zs
@@ -2043,6 +2044,7 @@ def invert_image(image, num_inversion_steps=50, skip=0.3):
     num_inversion_steps = num_inversion_steps,
     skip = skip
 )
+    print("post 5")
     return init_latents,zs
 
 def reset_do_inversion():
