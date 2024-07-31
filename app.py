@@ -1669,17 +1669,20 @@ class LEditsPPPipelineStableDiffusionXL(
         t_to_idx = {int(v): k for k, v in enumerate(timesteps)}
         xts = torch.zeros(size=variance_noise_shape, device=self.device, dtype=negative_prompt_embeds.dtype)
 
+        print("pre loop 1")
         for t in reversed(timesteps):
             idx = num_inversion_steps - t_to_idx[int(t)] - 1
             noise = randn_tensor(shape=x0.shape, generator=generator, device=self.device, dtype=x0.dtype)
             xts[idx] = self.scheduler.add_noise(x0, noise, t.unsqueeze(0))
         xts = torch.cat([x0.unsqueeze(0), xts], dim=0)
-
+        print("post loop 1")
+        
         # noise maps
         zs = torch.zeros(size=variance_noise_shape, device=self.device, dtype=negative_prompt_embeds.dtype)
 
         self.scheduler.set_timesteps(len(self.scheduler.timesteps))
 
+        print("pre loop 2")
         for t in self.progress_bar(timesteps):
             idx = num_inversion_steps - t_to_idx[int(t)] - 1
             # 1. predict noise residual
@@ -1711,6 +1714,7 @@ class LEditsPPPipelineStableDiffusionXL(
 
             # correction to avoid error accumulation
             xts[idx] = xtm1_corrected
+        print("post loop 2")
 
         self.init_latents = xts[-1]
         zs = zs.flip(0)
