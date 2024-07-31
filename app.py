@@ -163,13 +163,13 @@ def update_y(x,y,prompt, seed, steps,
 
 @spaces.GPU
 def invert(image, num_inversion_steps=50, skip=0.3):
-    _ = clip_slider_inv.pipe.invert(
+    init_latents,zs = clip_slider_inv.pipe.invert(
     source_prompt = "", 
     image = image,
     num_inversion_steps = num_inversion_steps,
     skip = skip
 )
-    return clip_slider_inv.pipe.init_latents, lip_slider_inv.pipe.zs
+    return init_latents,zs
 
 def reset_do_inversion():
         return True
