@@ -325,7 +325,7 @@ with gr.Blocks(css=css) as demo:
                      inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
                      outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image])
 
-    image_inv.change(fn=rest_do_inversion, outputs=[do_inversion]).then(fn=invert, inputs=[image_inv], outputs=[init_latents,zs])
+    image_inv.change(fn=reset_do_inversion, outputs=[do_inversion]).then(fn=invert, inputs=[image_inv], outputs=[init_latents,zs])
     submit_inv.click(fn=generate,
                      inputs=[slider_x_inv, slider_y_inv, prompt_inv, seed_inv, iterations_inv, steps_inv, guidance_scale_inv, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
                      outputs=[x_inv, y_inv, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image_inv])
