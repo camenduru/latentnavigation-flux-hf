@@ -285,6 +285,7 @@ with gr.Blocks(css=css) as demo:
                 slider_x_inv = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
                 slider_y_inv = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
                 prompt_inv = gr.Textbox(label="Prompt")
+                img2img_type_inv = gr.Radio(["inversion"], label="",value="inversion", info="", visible=False)
                 submit_inv = gr.Button("Submit")
             with gr.Column():
                 with gr.Group(elem_id="group"):
@@ -332,7 +333,7 @@ with gr.Blocks(css=css) as demo:
     
     generate_butt.click(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
     generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
-    generate_butt_inv.click(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, "inversion", None, None, None,edit_threshold, edit_guidance_scale, init_latents, zs], outputs=[output_image])
+    generate_butt_inv.click(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, img2img_type_inv, None, None, None,edit_threshold, edit_guidance_scale, init_latents, zs], outputs=[output_image])
     #x.change(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
     #y.change(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
     submit_a.click(fn=generate,
