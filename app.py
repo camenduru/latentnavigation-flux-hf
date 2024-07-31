@@ -283,7 +283,7 @@ with gr.Blocks(css=css) as demo:
     with gr.Tab(label="inversion"):
         with gr.Row():
             with gr.Column():
-                image_inv = gr.Image(type="pil", image_mode="L", crop_size=(512, 512))
+                image_inv = gr.Image(height=512, width=512)
                 slider_x_inv = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
                 slider_y_inv = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
                 prompt_inv = gr.Textbox(label="Prompt")
