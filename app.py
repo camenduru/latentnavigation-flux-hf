@@ -1716,12 +1716,12 @@ class LEditsPPPipelineStableDiffusionXL(
             xts[idx] = xtm1_corrected
         print("post loop 2")
 
-        self.init_latents = xts[-1]
+        #self.init_latents = xts[-1]
         zs = zs.flip(0)
 
         if num_zero_noise_steps > 0:
             zs[-num_zero_noise_steps:] = torch.zeros_like(zs[-num_zero_noise_steps:])
-        self.zs = zs
+        #self.zs = zs
         #return LEditsPPInversionPipelineOutput(images=resized, vae_reconstruction_images=image_rec)
         return xts[-1], zs
 
