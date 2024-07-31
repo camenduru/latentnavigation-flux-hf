@@ -71,7 +71,9 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale
              avg_diff_x_1, avg_diff_x_2,
              avg_diff_y_1, avg_diff_y_2,
              img2img_type = None, img = None, 
-             controlnet_scale= None, ip_adapter_scale=None):
+             controlnet_scale= None, ip_adapter_scale=None,
+             edit_threshold=None, edit_guidance_scale = None,
+             init_latents=None, zs=None):
     
     start_time = time.time()
     # check if avg diff for directions need to be re-calculated
@@ -101,6 +103,8 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
     elif img2img_type=="ip adapter" and img is not None:
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
+    elif img2img_type=="inversion":
+        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1), init_latents = init_latents, zs=zs)
     else: # text to image
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
     
@@ -153,6 +157,18 @@ def update_y(x,y,prompt, seed, steps,
     image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     return image
 
+@spaces.GPU
+def invert(image, num_inversion_steps=50, skip=0.3):
+    _ = clip_slider_inv.pipe.invert(
+    source_prompt = "", 
+    image = image,
+    num_inversion_steps = num_inversion_steps,
+    skip = skip
+)
+    return clip_slider_inv.pipe.init_latents, lip_slider_inv.pipe.zs
+
+def reset_do_inversion():
+        return True
 css = '''
 #group {
     position: relative;
@@ -188,6 +204,10 @@ with gr.Blocks(css=css) as demo:
     avg_diff_x_2 = gr.State()
     avg_diff_y_1 = gr.State()
     avg_diff_y_2 = gr.State()
+
+    do_inversion = gr.State()
+    init_latents = gr.State()
+    zs = gr.State()
     
     with gr.Tab("text2image"):
         with gr.Row():
@@ -257,13 +277,62 @@ with gr.Blocks(css=css) as demo:
                     value=0.8,
                 )
             seed_a  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
+
+    with gr.Tab(label="inversion"):
+        with gr.Row():
+            with gr.Column():
+                image_inv = gr.ImageEditor(type="pil", image_mode="L", crop_size=(512, 512))
+                slider_x_inv = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
+                slider_y_inv = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
+                prompt_inv = gr.Textbox(label="Prompt")
+                submit_inv = gr.Button("Submit")
+            with gr.Column():
+                with gr.Group(elem_id="group"):
+                  x_inv = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
+                  y_inv = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
+                  output_image_inv = gr.Image(elem_id="image_out")
+            generate_butt_inv = gr.Button("generate")
+        
+        with gr.Accordion(label="advanced options", open=False):
+            iterations_inv = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=300)
+            steps_inv = gr.Slider(label = "num inference steps", minimum=1, value=8, maximum=30)
+            guidance_scale_inv = gr.Slider(
+                    label="Guidance scale",
+                    minimum=0.1,
+                    maximum=10.0,
+                    step=0.1,
+                    value=5,
+                )
+            # edit_threshold=None, edit_guidance_scale = None,
+            #  init_latents=None, zs=None
+            edit_threshold = gr.Slider(
+                    label="edit threshold",
+                    minimum=0.01,
+                    maximum=0.99,
+                    step=0.1,
+                    value=0.3,
+                )
+            edit_guidance_scale = gr.Slider(
+                    label="edit guidance scale",
+                    minimum=0,
+                    maximum=20,
+                    step=0.25,
+                    value=5,
+                )
+            seed_inv = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
     submit.click(fn=generate,
                      inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
                      outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image])
+
+    image_inv.change(fn=rest_do_inversion, outputs=[do_inversion]).then(fn=invert, inputs=[image_inv], outputs=[init_latents,zs])
+    submit_inv.click(fn=generate,
+                     inputs=[slider_x_inv, slider_y_inv, prompt_inv, seed_inv, iterations_inv, steps_inv, guidance_scale_inv, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
+                     outputs=[x_inv, y_inv, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image_inv])
     
     generate_butt.click(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
     generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
+    generate_butt_inv.click(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, "inversion", None, None, None,edit_threshold, edit_guidance_scale, init_latents, zs], outputs=[output_image])
     #x.change(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
     #y.change(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
     submit_a.click(fn=generate,

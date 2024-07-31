@@ -209,7 +209,9 @@ class CLIPSliderXL(CLIPSlider):
         normalize_scales = False,
         correlation_weight_factor = 1.0,
         avg_diff = None,
-        avg_diff_2nd = None, 
+        avg_diff_2nd = None,
+        init_latents = None, # inversion
+        zs = None, # inversion
         **pipeline_kwargs
         ):
         # if doing full sequence, [-0.3,0.3] work well, higher if correlation weighted is true
@@ -287,8 +289,13 @@ class CLIPSliderXL(CLIPSlider):
             print(f"generation time - before pipe: {end_time - start_time:.2f} ms")
             torch.manual_seed(seed)
             start_time = time.time()
-            image = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
+            if init_latents is not None: # inversion
+                image = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds, 
+                                  avg_diff=avg_diff, avg_diff_2=avg_diff2, scale=scale,
                          **pipeline_kwargs).images[0]
+            else:
+                image = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
+                             **pipeline_kwargs).images[0]
             end_time = time.time()
             print(f"generation time - pipe: {end_time - start_time:.2f} ms")
 
