@@ -221,7 +221,8 @@ with gr.Blocks(css=css) as demo:
                   x = gr.Slider(minimum=-7, value=0, maximum=7, elem_id="x", interactive=False)
                   y = gr.Slider(minimum=-7, value=0, maximum=7, elem_id="y", interactive=False)
                   output_image = gr.Image(elem_id="image_out")
-            generate_butt = gr.Button("generate")
+                with gr.Row():
+                    generate_butt = gr.Button("generate")
         
         with gr.Accordion(label="advanced options", open=False):
             iterations = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=400)
@@ -250,7 +251,8 @@ with gr.Blocks(css=css) as demo:
                   x_a = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
                   y_a = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
                   output_image_a = gr.Image(elem_id="image_out")
-            generate_butt_a = gr.Button("generate")
+                with gr.Row():
+                    generate_butt_a = gr.Button("generate")
         
         with gr.Accordion(label="advanced options", open=False):
             iterations_a = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=300)
@@ -292,7 +294,8 @@ with gr.Blocks(css=css) as demo:
                   x_inv = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
                   y_inv = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
                   output_image_inv = gr.Image(elem_id="image_out")
-            generate_butt_inv = gr.Button("generate")
+                with gr.Row():
+                    generate_butt_inv = gr.Button("generate")
         
         with gr.Accordion(label="advanced options", open=False):
             iterations_inv = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=300)
