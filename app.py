@@ -1,3 +1,16 @@
+import gradio as gr
+import spaces
+import torch
+from clip_slider_pipeline import CLIPSliderXL
+from diffusers import StableDiffusionXLPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, EulerDiscreteScheduler,  AutoencoderKL
+import time
+import numpy as np
+import cv2
+from PIL import Image
+#from ledits.pipeline_leditspp_stable_diffusion_xl import LEditsPPPipelineStableDiffusionXL
+
+
+
 # Copyright 2023 The HuggingFace Team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -1860,17 +1873,6 @@ def compute_noise(scheduler, *args):
     else:
         raise NotImplementedError
 
-
-import gradio as gr
-import spaces
-import torch
-from clip_slider_pipeline import CLIPSliderXL
-from diffusers import StableDiffusionXLPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, EulerDiscreteScheduler,  AutoencoderKL
-import time
-import numpy as np
-import cv2
-from PIL import Image
-#from ledits.pipeline_leditspp_stable_diffusion_xl import LEditsPPPipelineStableDiffusionXL
 
 def HWC3(x):
     assert x.dtype == np.uint8
