@@ -1,7 +1,7 @@
 import gradio as gr
 import spaces
 import torch
-from clip_slider_pipeline import CLIPSliderXL
+from clip_slider_pipeline import CLIPSliderXL, CLIPSliderXL_inv
 from diffusers import StableDiffusionXLPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline, EulerDiscreteScheduler,  AutoencoderKL
 import time
 import numpy as np
