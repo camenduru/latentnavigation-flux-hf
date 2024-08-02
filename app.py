@@ -919,7 +919,6 @@ class LEditsPPPipelineStableDiffusionXL(
         correlation_weight_factor=0.7,
         scale=2,
         scale_2nd=2,
-        correlation_weight_factor = 0.7,
         init_latents: [torch.Tensor] = None,
         zs: [torch.Tensor] = None,
         **kwargs,
