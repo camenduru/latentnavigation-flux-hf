@@ -66,7 +66,7 @@ from diffusers.utils import (
 )
 from diffusers.utils.torch_utils import randn_tensor
 from diffusers.pipelines.pipeline_utils import DiffusionPipeline
-from ledits.pipeline_output import LEditsPPDiffusionPipelineOutput, LEditsPPInversionPipelineOutput
+from .pipeline_output import LEditsPPDiffusionPipelineOutput, LEditsPPInversionPipelineOutput
 
 
 if is_invisible_watermark_available():
@@ -428,10 +428,11 @@ class LEditsPPPipelineStableDiffusionXL(
         editing_prompt: Optional[str] = None,
         editing_prompt_embeds: Optional[torch.Tensor] = None,
         editing_pooled_prompt_embeds: Optional[torch.Tensor] = None,
-        avg_diff = None,
-        avg_diff_2 = None,
-        correlation_weight_factor = 0.7,
+        avg_diff=None, # [0] -> text encoder  1,[1] ->text encoder  2
+        avg_diff_2nd=None,  # text encoder  1,2
+        correlation_weight_factor=0.7,
         scale=2,
+        scale_2nd=2,
     ) -> object:
         r"""
         Encodes the prompt into text encoder hidden states.
@@ -551,9 +552,8 @@ class LEditsPPPipelineStableDiffusionXL(
                 negative_pooled_prompt_embeds = negative_prompt_embeds[0]
                 negative_prompt_embeds = negative_prompt_embeds.hidden_states[-2]
                 
-                if avg_diff is not None and avg_diff_2 is not None:
-                    #scale=3
-                    print("SHALOM neg")
+                if avg_diff is not None:
+                    # scale=3
                     normed_prompt_embeds = negative_prompt_embeds / negative_prompt_embeds.norm(dim=-1, keepdim=True)
                     sims = normed_prompt_embeds[0] @ normed_prompt_embeds[0].T
                     if j == 0:
@@ -562,15 +562,26 @@ class LEditsPPPipelineStableDiffusionXL(
                         standard_weights = torch.ones_like(weights)
 
                         weights = standard_weights + (weights - standard_weights) * correlation_weight_factor
-                        edit_concepts_embeds = negative_prompt_embeds + (weights * avg_diff[None, :].repeat(1,tokenizer.model_max_length, 1) * scale)
+                        edit_concepts_embeds = negative_prompt_embeds + (
+                                    weights * avg_diff[0][None, :].repeat(1, tokenizer.model_max_length, 1) * scale)
+
+                        if avg_diff_2nd is not None:
+                            edit_concepts_embeds += (weights * avg_diff_2nd[0][None, :].repeat(1,
+                                                                                            self.pipe.tokenizer.model_max_length,
+                                                                                            1) * scale_2nd)
                     else:
                         weights = sims[toks.argmax(), :][None, :, None].repeat(1, 1, 1280)
 
                         standard_weights = torch.ones_like(weights)
 
                         weights = standard_weights + (weights - standard_weights) * correlation_weight_factor
-                        edit_concepts_embeds = negative_prompt_embeds + (weights * avg_diff_2[None, :].repeat(1, tokenizer.model_max_length, 1) * scale)
+                        edit_concepts_embeds = negative_prompt_embeds + (
+                                    weights * avg_diff[1][None, :].repeat(1, tokenizer.model_max_length, 1) * scale)
 
+                        if avg_diff_2nd is not None:
+                            edit_concepts_embeds += (weights * avg_diff_2nd[1][None, :].repeat(1,
+                                                                                        self.pipe.tokenizer_2.model_max_length,
+                                                                                        1) * scale_2nd)
 
                 negative_prompt_embeds_list.append(negative_prompt_embeds)
                 j+=1
@@ -858,8 +869,8 @@ class LEditsPPPipelineStableDiffusionXL(
 
         self.unet.set_attn_processor(attn_procs)
 
-    @spaces.GPU
     @torch.no_grad()
+    @spaces.GPU
     @replace_example_docstring(EXAMPLE_DOC_STRING)
     def __call__(
         self,
@@ -892,10 +903,12 @@ class LEditsPPPipelineStableDiffusionXL(
         clip_skip: Optional[int] = None,
         callback_on_step_end: Optional[Callable[[int, int, Dict], None]] = None,
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
-        avg_diff = None,
-        avg_diff_2 = None,
-        correlation_weight_factor = 0.7,
+        avg_diff=None, # [0] -> text encoder  1,[1] ->text encoder  2
+        avg_diff_2nd=None,  # text encoder  1,2
+        correlation_weight_factor=0.7,
         scale=2,
+        scale_2nd=2,
+        correlation_weight_factor = 0.7,
         init_latents: [torch.Tensor] = None,
         zs: [torch.Tensor] = None,
         **kwargs,
@@ -1102,9 +1115,10 @@ class LEditsPPPipelineStableDiffusionXL(
             editing_prompt_embeds=editing_prompt_embeddings,
             editing_pooled_prompt_embeds=editing_pooled_prompt_embeds,
             avg_diff = avg_diff,
-            avg_diff_2 = avg_diff_2,
+            avg_diff_2nd = avg_diff_2nd,
             correlation_weight_factor = correlation_weight_factor,
             scale=scale,
+            scale_2nd=scale_2nd
         )
 
         # 4. Prepare timesteps
@@ -1475,7 +1489,6 @@ class LEditsPPPipelineStableDiffusionXL(
 
     @torch.no_grad()
     # Modified from diffusers.pipelines.ledits_pp.pipeline_leditspp_stable_diffusion.LEditsPPPipelineStableDiffusion.encode_image
-    @spaces.GPU
     def encode_image(self, image, dtype=None, height=None, width=None, resize_mode="default", crops_coords=None):
         image = self.image_processor.preprocess(
             image=image, height=height, width=width, resize_mode=resize_mode, crops_coords=crops_coords
@@ -1504,8 +1517,8 @@ class LEditsPPPipelineStableDiffusionXL(
         x0 = self.vae.config.scaling_factor * x0
         return x0, resized
 
-    @spaces.GPU
     @torch.no_grad()
+    @spaces.GPU
     def invert(
         self,
         image: PipelineImageInput,
@@ -1669,20 +1682,17 @@ class LEditsPPPipelineStableDiffusionXL(
         t_to_idx = {int(v): k for k, v in enumerate(timesteps)}
         xts = torch.zeros(size=variance_noise_shape, device=self.device, dtype=negative_prompt_embeds.dtype)
 
-        print("pre loop 1")
         for t in reversed(timesteps):
             idx = num_inversion_steps - t_to_idx[int(t)] - 1
             noise = randn_tensor(shape=x0.shape, generator=generator, device=self.device, dtype=x0.dtype)
             xts[idx] = self.scheduler.add_noise(x0, noise, t.unsqueeze(0))
         xts = torch.cat([x0.unsqueeze(0), xts], dim=0)
-        print("post loop 1")
-        
+
         # noise maps
         zs = torch.zeros(size=variance_noise_shape, device=self.device, dtype=negative_prompt_embeds.dtype)
 
         self.scheduler.set_timesteps(len(self.scheduler.timesteps))
 
-        print("pre loop 2")
         for t in self.progress_bar(timesteps):
             idx = num_inversion_steps - t_to_idx[int(t)] - 1
             # 1. predict noise residual
@@ -1714,21 +1724,18 @@ class LEditsPPPipelineStableDiffusionXL(
 
             # correction to avoid error accumulation
             xts[idx] = xtm1_corrected
-        print("post loop 2")
 
-        #self.init_latents = xts[-1]
+        self.init_latents = xts[-1]
         zs = zs.flip(0)
-        print("post 3")
+
         if num_zero_noise_steps > 0:
             zs[-num_zero_noise_steps:] = torch.zeros_like(zs[-num_zero_noise_steps:])
-        print("post 4")
-        #self.zs = zs
+        self.zs = zs
         #return LEditsPPInversionPipelineOutput(images=resized, vae_reconstruction_images=image_rec)
         return xts[-1], zs
 
 
 # Copied from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl.rescale_noise_cfg
-@spaces.GPU
 def rescale_noise_cfg(noise_cfg, noise_pred_text, guidance_rescale=0.0):
     """
     Rescale `noise_cfg` according to `guidance_rescale`. Based on findings of [Common Diffusion Noise Schedules and
@@ -1783,7 +1790,6 @@ def compute_noise_ddim(scheduler, prev_latents, latents, timestep, noise_pred, e
 
 
 # Copied from diffusers.pipelines.ledits_pp.pipeline_leditspp_stable_diffusion.compute_noise_sde_dpm_pp_2nd
-@spaces.GPU
 def compute_noise_sde_dpm_pp_2nd(scheduler, prev_latents, latents, timestep, noise_pred, eta):
     def first_order_update(model_output, sample):  # timestep, prev_timestep, sample):
         sigma_t, sigma_s = scheduler.sigmas[scheduler.step_index + 1], scheduler.sigmas[scheduler.step_index]
@@ -1869,7 +1875,6 @@ def compute_noise_sde_dpm_pp_2nd(scheduler, prev_latents, latents, timestep, noi
 
 
 # Copied from diffusers.pipelines.ledits_pp.pipeline_leditspp_stable_diffusion.compute_noise
-@spaces.GPU
 def compute_noise(scheduler, *args):
     if isinstance(scheduler, DDIMScheduler):
         return compute_noise_ddim(scheduler, *args)
