@@ -1937,7 +1937,7 @@ pipe_inv = LEditsPPPipelineStableDiffusionXL.from_pretrained(
     "stabilityai/stable-diffusion-xl-base-1.0", vae=vae,
     torch_dtype=torch.float16
 )
-clip_slider_inv = CLIPSliderXL(sd_pipe=pipe_inv,device=torch.device("cuda"))
+clip_slider_inv = CLIPSliderXL_inv(sd_pipe=pipe_inv,device=torch.device("cuda"))
 
 @spaces.GPU(duration=120)
 def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale,
@@ -1978,7 +1978,7 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale
     elif img2img_type=="ip adapter" and img is not None:
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
     elif img2img_type=="inversion":
-        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1), init_latents = init_latents, zs=zs, edit_threshold=edit_threshold, edit_guidance_scale = edit_guidance_scale)
+        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=0, scale_2nd=0, seed=seed, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1), init_latents = init_latents, zs=zs, edit_threshold=[edit_threshold], edit_guidance_scale = [edit_guidance_scale])
     else: # text to image
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
     
@@ -2010,7 +2010,7 @@ def update_scales(x,y,prompt,seed, steps, guidance_scale,
     elif img2img_type=="ip adapter" and img is not None:
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     elif img2img_type=="inversion":
-        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1),  edit_threshold=edit_threshold, edit_guidance_scale = edit_guidance_scale, init_latents = init_latents, zs=zs)
+        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=x, scale_2nd=y, seed=seed, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1),  edit_threshold=[edit_threshold], edit_guidance_scale = [edit_guidance_scale], init_latents = init_latents, zs=zs)
     else:     
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     return image
