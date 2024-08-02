@@ -415,10 +415,11 @@ class LEditsPPPipelineStableDiffusionXL(
         editing_prompt: Optional[str] = None,
         editing_prompt_embeds: Optional[torch.Tensor] = None,
         editing_pooled_prompt_embeds: Optional[torch.Tensor] = None,
-        avg_diff = None,
-        avg_diff_2 = None,
-        correlation_weight_factor = 0.7,
+        avg_diff=None, # [0] -> text encoder  1,[1] ->text encoder  2
+        avg_diff_2nd=None,  # text encoder  1,2
+        correlation_weight_factor=0.7,
         scale=2,
+        scale_2nd=2,
     ) -> object:
         r"""
         Encodes the prompt into text encoder hidden states.
@@ -538,9 +539,8 @@ class LEditsPPPipelineStableDiffusionXL(
                 negative_pooled_prompt_embeds = negative_prompt_embeds[0]
                 negative_prompt_embeds = negative_prompt_embeds.hidden_states[-2]
                 
-                if avg_diff is not None and avg_diff_2 is not None:
-                    #scale=3
-                    print("SHALOM neg")
+                if avg_diff is not None:
+                    # scale=3
                     normed_prompt_embeds = negative_prompt_embeds / negative_prompt_embeds.norm(dim=-1, keepdim=True)
                     sims = normed_prompt_embeds[0] @ normed_prompt_embeds[0].T
                     if j == 0:
@@ -549,15 +549,26 @@ class LEditsPPPipelineStableDiffusionXL(
                         standard_weights = torch.ones_like(weights)
 
                         weights = standard_weights + (weights - standard_weights) * correlation_weight_factor
-                        edit_concepts_embeds = negative_prompt_embeds + (weights * avg_diff[None, :].repeat(1,tokenizer.model_max_length, 1) * scale)
+                        edit_concepts_embeds = negative_prompt_embeds + (
+                                    weights * avg_diff[0][None, :].repeat(1, tokenizer.model_max_length, 1) * scale)
+
+                        if avg_diff_2nd is not None:
+                            edit_concepts_embeds += (weights * avg_diff_2nd[0][None, :].repeat(1,
+                                                                                            self.pipe.tokenizer.model_max_length,
+                                                                                            1) * scale_2nd)
                     else:
                         weights = sims[toks.argmax(), :][None, :, None].repeat(1, 1, 1280)
 
                         standard_weights = torch.ones_like(weights)
 
                         weights = standard_weights + (weights - standard_weights) * correlation_weight_factor
-                        edit_concepts_embeds = negative_prompt_embeds + (weights * avg_diff_2[None, :].repeat(1, tokenizer.model_max_length, 1) * scale)
+                        edit_concepts_embeds = negative_prompt_embeds + (
+                                    weights * avg_diff[1][None, :].repeat(1, tokenizer.model_max_length, 1) * scale)
 
+                        if avg_diff_2nd is not None:
+                            edit_concepts_embeds += (weights * avg_diff_2nd[1][None, :].repeat(1,
+                                                                                        self.pipe.tokenizer_2.model_max_length,
+                                                                                        1) * scale_2nd)
 
                 negative_prompt_embeds_list.append(negative_prompt_embeds)
                 j+=1
@@ -878,10 +889,12 @@ class LEditsPPPipelineStableDiffusionXL(
         clip_skip: Optional[int] = None,
         callback_on_step_end: Optional[Callable[[int, int, Dict], None]] = None,
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
-        avg_diff = None,
-        avg_diff_2 = None,
-        correlation_weight_factor = 0.7,
+        avg_diff=None, # [0] -> text encoder  1,[1] ->text encoder  2
+        avg_diff_2nd=None,  # text encoder  1,2
+        correlation_weight_factor=0.7,
         scale=2,
+        scale_2nd=2,
+        correlation_weight_factor = 0.7,
         init_latents: [torch.Tensor] = None,
         zs: [torch.Tensor] = None,
         **kwargs,
@@ -1088,9 +1101,10 @@ class LEditsPPPipelineStableDiffusionXL(
             editing_prompt_embeds=editing_prompt_embeddings,
             editing_pooled_prompt_embeds=editing_pooled_prompt_embeds,
             avg_diff = avg_diff,
-            avg_diff_2 = avg_diff_2,
+            avg_diff_2nd = avg_diff_2nd,
             correlation_weight_factor = correlation_weight_factor,
             scale=scale,
+            scale_2nd=scale_2nd
         )
 
         # 4. Prepare timesteps
