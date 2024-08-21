@@ -61,7 +61,6 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale
         avg_diff = t5_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations).to(torch.float16)
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
     
-    print("avg_diff_0", avg_diff_0.dtype)
     
     if not sorted(slider_y) == sorted([y_concept_1, y_concept_2]):
         avg_diff_2nd = t5_slider.find_latent_direction(slider_y[0], slider_y[1], num_iterations=iterations).to(torch.float16)
@@ -161,10 +160,8 @@ with gr.Blocks(css=css) as demo:
     y_concept_1 = gr.State("")
     y_concept_2 = gr.State("")
 
-    avg_diff_x_1 = gr.State()
-    avg_diff_x_2 = gr.State()
-    avg_diff_y_1 = gr.State()
-    avg_diff_y_2 = gr.State()
+    avg_diff_x = gr.State()
+    avg_diff_y = gr.State()
     
     with gr.Tab("text2image"):
         with gr.Row():
@@ -238,18 +235,14 @@ with gr.Blocks(css=css) as demo:
             seed_a  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
     submit.click(fn=generate,
-                     inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2],
-                     outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image])
+                     inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y,],
+                     outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
 
-    generate_butt.click(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
-    generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
-    #x.change(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
-    #y.change(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2], outputs=[output_image])
+    generate_butt.click(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x, avg_diff_y], outputs=[output_image])
+    generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
     submit_a.click(fn=generate,
-                     inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, guidance_scale_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale],
-                     outputs=[x_a, y_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, output_image_a])
-    #x_a.change(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
-    #y_a.change(fn=update_scales, inputs=[x_a,y_a, prompt, seed_a, steps_a, guidance_scale_a, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
+                     inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, guidance_scale_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale],
+                     outputs=[x_a, y_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image_a])
 
         
 if __name__ == "__main__":
