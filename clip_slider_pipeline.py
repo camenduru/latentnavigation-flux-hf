@@ -10,17 +10,20 @@ class CLIPSlider:
             self,
             sd_pipe,
             device: torch.device,
-            target_word: str,
-            opposite: str,
+            target_word: str = "",
+            opposite: str = "",
             target_word_2nd: str = "",
             opposite_2nd: str = "",
             iterations: int = 300,
     ):
 
         self.device = device
-        self.pipe = sd_pipe.to(self.device)
+        self.pipe = sd_pipe.to(self.device, torch.float16)
         self.iterations = iterations
-        self.avg_diff = self.find_latent_direction(target_word, opposite)
+        if target_word != "" or opposite != "":
+            self.avg_diff = self.find_latent_direction(target_word, opposite)
+        else:
+            self.avg_diff = None
         if target_word_2nd != "" or opposite_2nd != "":
             self.avg_diff_2nd = self.find_latent_direction(target_word_2nd, opposite_2nd)
         else:
@@ -29,12 +32,15 @@ class CLIPSlider:
 
     def find_latent_direction(self,
                               target_word:str,
-                              opposite:str):
+                              opposite:str, num_iterations: int = None):
 
         # lets identify a latent direction by taking differences between opposites
         # target_word = "happy"
         # opposite = "sad"
-
+        if num_iterations is not None: 
+            iterations = num_iterations
+        else:
+            iterations = self.iterations
 
         with torch.no_grad():
             positives = []
@@ -70,6 +76,8 @@ class CLIPSlider:
         only_pooler = False,
         normalize_scales = False, # whether to normalize the scales when avg_diff_2nd is not None
         correlation_weight_factor = 1.0,
+        avg_diff = None,
+        avg_diff_2nd = None, 
         **pipeline_kwargs
         ):
         # if doing full sequence, [-0.3,0.3] work well, higher if correlation weighted is true
@@ -80,14 +88,14 @@ class CLIPSlider:
                                   max_length=self.pipe.tokenizer.model_max_length).input_ids.cuda()
         prompt_embeds = self.pipe.text_encoder(toks).last_hidden_state
 
-        if self.avg_diff_2nd and normalize_scales:
+        if avg_diff_2nd and normalize_scales:
             denominator = abs(scale) + abs(scale_2nd)
             scale = scale / denominator
             scale_2nd = scale_2nd / denominator
         if only_pooler:
-            prompt_embeds[:, toks.argmax()] = prompt_embeds[:, toks.argmax()] + self.avg_diff * scale
-            if self.avg_diff_2nd:
-                prompt_embeds[:, toks.argmax()] += self.avg_diff_2nd * scale_2nd
+            prompt_embeds[:, toks.argmax()] = prompt_embeds[:, toks.argmax()] + avg_diff * scale
+            if avg_diff_2nd:
+                prompt_embeds[:, toks.argmax()] += avg_diff_2nd * scale_2nd
         else:
             normed_prompt_embeds = prompt_embeds / prompt_embeds.norm(dim=-1, keepdim=True)
         sims = normed_prompt_embeds[0] @ normed_prompt_embeds[0].T
@@ -99,9 +107,9 @@ class CLIPSlider:
 
         # weights = torch.sigmoid((weights-0.5)*7)
         prompt_embeds = prompt_embeds + (
-                    weights * self.avg_diff[None, :].repeat(1, self.pipe.tokenizer.model_max_length, 1) * scale)
-        if self.avg_diff_2nd:
-            prompt_embeds += weights * self.avg_diff_2nd[None, :].repeat(1, self.pipe.tokenizer.model_max_length, 1) * scale_2nd
+                    weights * avg_diff[None, :].repeat(1, self.pipe.tokenizer.model_max_length, 1) * scale)
+        if avg_diff_2nd:
+            prompt_embeds += weights * avg_diff_2nd[None, :].repeat(1, self.pipe.tokenizer.model_max_length, 1) * scale_2nd
 
 
         torch.manual_seed(seed)
@@ -399,6 +407,8 @@ class T5SliderFlux(CLIPSlider):
         only_pooler = False,
         normalize_scales = False,
         correlation_weight_factor = 1.0,
+        avg_diff = None,
+        avg_diff_2nd = None, 
         **pipeline_kwargs
         ):
         # if doing full sequence, [-0.3,0.3] work well, higher if correlation weighted is true
@@ -438,14 +448,14 @@ class T5SliderFlux(CLIPSlider):
             dtype = self.pipe.text_encoder_2.dtype
             prompt_embeds = prompt_embeds.to(dtype=dtype, device=self.device)
             print("1", prompt_embeds.shape)
-            if self.avg_diff_2nd and normalize_scales:
+            if avg_diff_2nd and normalize_scales:
                 denominator = abs(scale) + abs(scale_2nd)
                 scale = scale / denominator
                 scale_2nd = scale_2nd / denominator
             if only_pooler:
-                prompt_embeds[:, toks.argmax()] = prompt_embeds[:, toks.argmax()] + self.avg_diff * scale
-                if self.avg_diff_2nd:
-                    prompt_embeds[:, toks.argmax()] += self.avg_diff_2nd * scale_2nd
+                prompt_embeds[:, toks.argmax()] = prompt_embeds[:, toks.argmax()] + avg_diff * scale
+                if avg_diff_2nd:
+                    prompt_embeds[:, toks.argmax()] += avg_diff_2nd * scale_2nd
             else:
                 normed_prompt_embeds = prompt_embeds / prompt_embeds.norm(dim=-1, keepdim=True)
                 sims = normed_prompt_embeds[0] @ normed_prompt_embeds[0].T
@@ -457,11 +467,11 @@ class T5SliderFlux(CLIPSlider):
 
                 weights = standard_weights + (weights - standard_weights) * correlation_weight_factor
                 prompt_embeds = prompt_embeds + (
-                            weights * self.avg_diff * scale)
+                            weights * avg_diff * scale)
                 print("2", prompt_embeds.shape)
-                if self.avg_diff_2nd:
+                if avg_diff_2nd:
                     prompt_embeds += (
-                                weights * self.avg_diff_2nd * scale_2nd)
+                                weights * avg_diff_2nd * scale_2nd)
 
             torch.manual_seed(seed)
             images = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
