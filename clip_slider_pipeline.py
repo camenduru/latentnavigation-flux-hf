@@ -359,7 +359,8 @@ class T5SliderFlux(CLIPSlider):
 
     def find_latent_direction(self,
                               target_word:str,
-                              opposite:str,num_iterations:int=300 ):
+                              opposite:str,
+                              num_iterations:int ):
 
         # lets identify a latent direction by taking differences between opposites
         # target_word = "happy"
