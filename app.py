@@ -58,17 +58,13 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
     
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]):
-        avg_diff = t5_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations)
-        avg_diff_0 = avg_diff[0].to(torch.float16)
-        avg_diff_1 = avg_diff[1].to(torch.float16)
+        avg_diff = t5_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations).to(torch.float16)
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
     
     print("avg_diff_0", avg_diff_0.dtype)
     
     if not sorted(slider_y) == sorted([y_concept_1, y_concept_2]):
-        avg_diff_2nd = t5_slider.find_latent_direction(slider_y[0], slider_y[1], num_iterations=iterations)
-        avg_diff_2nd_0 = avg_diff_2nd[0].to(torch.float16)
-        avg_diff_2nd_1 = avg_diff_2nd[1].to(torch.float16)
+        avg_diff_2nd = t5_slider.find_latent_direction(slider_y[0], slider_y[1], num_iterations=iterations).to(torch.float16)
         y_concept_1, y_concept_2 = slider_y[0], slider_y[1]
     end_time = time.time()
     print(f"direction time: {end_time - start_time:.2f} ms")
@@ -77,11 +73,11 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale
     
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
-        image = t5_slider.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
+        image = t5_slider.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
     elif img2img_type=="ip adapter" and img is not None:
-        image = t5_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
+        image = t5_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
     else: # text to image
-        image = t5_slider.generate(prompt, guidance_scale=guidance_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=(avg_diff_0,avg_diff_1), avg_diff_2nd=(avg_diff_2nd_0,avg_diff_2nd_1))
+        image = t5_slider.generate(prompt, guidance_scale=guidance_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
     
     end_time = time.time()
     print(f"generation time: {end_time - start_time:.2f} ms")
@@ -89,20 +85,18 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale
     comma_concepts_x = ', '.join(slider_x)
     comma_concepts_y = ', '.join(slider_y)
 
-    avg_diff_x_1 = avg_diff_0.cpu()
-    avg_diff_x_2 = avg_diff_1.cpu()
-    avg_diff_y_1 = avg_diff_2nd_0.cpu()
-    avg_diff_y_2 = avg_diff_2nd_1.cpu()
+    avg_diff_x = avg_diff.cpu()
+    avg_diff_y = avg_diff_2nd.cpu()
   
-    return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, image
+    return gr.update(label=comma_concepts_x, interactive=True),gr.update(label=comma_concepts_y, interactive=True), x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, image
 
 @spaces.GPU
 def update_scales(x,y,prompt,seed, steps, guidance_scale,
-                  avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2, 
+                  avg_diff_x, avg_diff_y,
                   img2img_type = None, img = None,
                   controlnet_scale= None, ip_adapter_scale=None,):
-    avg_diff = (avg_diff_x_1.cuda(), avg_diff_x_2.cuda())
-    avg_diff_2nd = (avg_diff_y_1.cuda(), avg_diff_y_2.cuda())
+    avg_diff = avg_diff_x.cuda()
+    avg_diff_2nd = avg_diff_y.cuda()
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
         image = t5_slider.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
@@ -112,23 +106,25 @@ def update_scales(x,y,prompt,seed, steps, guidance_scale,
         image = t5_slider.generate(prompt, guidance_scale=guidance_scale, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     return image
 
+
+
 @spaces.GPU
 def update_x(x,y,prompt,seed, steps, 
-             avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2,
+             avg_diff_x, avg_diff_y,
              img2img_type = None,
              img = None):
-    avg_diff = (avg_diff_x_1.cuda(), avg_diff_x_2.cuda())
-    avg_diff_2nd = (avg_diff_y_1.cuda(), avg_diff_y_2.cuda())
-    image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+    avg_diff = avg_diff_x.cuda()
+    avg_diff_2nd = avg_diff_y.cuda()
+    image = t5_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     return image
 
 @spaces.GPU
-def update_y(x,y,prompt, seed, steps, 
-            avg_diff_x_1, avg_diff_x_2, avg_diff_y_1, avg_diff_y_2,
-            img2img_type = None,
-            img = None):
-    avg_diff = (avg_diff_x_1.cuda(), avg_diff_x_2.cuda())
-    avg_diff_2nd = (avg_diff_y_1.cuda(), avg_diff_y_2.cuda())
+def update_y(x,y,prompt,seed, steps, 
+             avg_diff_x, avg_diff_y,
+             img2img_type = None,
+             img = None):
+    avg_diff = avg_diff_x.cuda()
+    avg_diff_2nd = avg_diff_y.cuda()
     image = t5_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     return image
 
