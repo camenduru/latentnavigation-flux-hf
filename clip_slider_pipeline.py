@@ -14,7 +14,7 @@ class CLIPSlider:
             opposite: str = "",
             target_word_2nd: str = "",
             opposite_2nd: str = "",
-            iterations: int = 300,
+             
     ):
 
         self.device = device
@@ -32,7 +32,8 @@ class CLIPSlider:
 
     def find_latent_direction(self,
                               target_word:str,
-                              opposite:str, num_iterations: int = None):
+                              opposite:str, 
+                              num_iterations: int = None):
 
         # lets identify a latent direction by taking differences between opposites
         # target_word = "happy"
@@ -357,12 +358,15 @@ class T5SliderFlux(CLIPSlider):
 
     def find_latent_direction(self,
                               target_word:str,
-                              opposite:str):
+                              opposite:str,num_iterations:int=300 ):
 
         # lets identify a latent direction by taking differences between opposites
         # target_word = "happy"
         # opposite = "sad"
-
+        if num_iterations is not None: 
+            iterations = num_iterations
+        else:
+            iterations = self.iterations
 
         with torch.no_grad():
             positives = []
