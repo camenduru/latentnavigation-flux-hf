@@ -14,6 +14,7 @@ class CLIPSlider:
             opposite: str = "",
             target_word_2nd: str = "",
             opposite_2nd: str = "",
+            iterations: int = 300,
              
     ):
 
