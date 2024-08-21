@@ -3,3 +3,4 @@ transformers
 peft
 accelerate
 opencv-python
+sentencepiece
