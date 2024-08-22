@@ -412,7 +412,7 @@ class T5SliderFlux(CLIPSlider):
         seed = 15,
         only_pooler = False,
         normalize_scales = False,
-        correlation_weight_factor = 1.0,
+        correlation_weight_factor = 0.6,
         avg_diff = None,
         avg_diff_2nd = None, 
         **pipeline_kwargs
