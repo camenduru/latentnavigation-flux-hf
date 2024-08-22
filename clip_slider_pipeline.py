@@ -454,13 +454,13 @@ class T5SliderFlux(CLIPSlider):
             dtype = self.pipe.text_encoder_2.dtype
             prompt_embeds = prompt_embeds.to(dtype=dtype, device=self.device)
             print("1", prompt_embeds.shape)
-            if avg_diff_2nd and normalize_scales:
+            if avg_diff_2nd is not None and normalize_scales:
                 denominator = abs(scale) + abs(scale_2nd)
                 scale = scale / denominator
                 scale_2nd = scale_2nd / denominator
             if only_pooler:
                 prompt_embeds[:, toks.argmax()] = prompt_embeds[:, toks.argmax()] + avg_diff * scale
-                if avg_diff_2nd:
+                if avg_diff_2nd is not None:
                     prompt_embeds[:, toks.argmax()] += avg_diff_2nd * scale_2nd
             else:
                 normed_prompt_embeds = prompt_embeds / prompt_embeds.norm(dim=-1, keepdim=True)
@@ -475,7 +475,7 @@ class T5SliderFlux(CLIPSlider):
                 prompt_embeds = prompt_embeds + (
                             weights * avg_diff * scale)
                 print("2", prompt_embeds.shape)
-                if avg_diff_2nd:
+                if avg_diff_2nd is not None:
                     prompt_embeds += (
                                 weights * avg_diff_2nd * scale_2nd)
 
