@@ -180,7 +180,7 @@ with gr.Blocks(css=css) as demo:
         
         with gr.Accordion(label="advanced options", open=False):
             iterations = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=400)
-            steps = gr.Slider(label = "num inference steps", minimum=1, value=8, maximum=30)
+            steps = gr.Slider(label = "num inference steps", minimum=1, value=4, maximum=10)
             guidance_scale = gr.Slider(
                     label="Guidance scale",
                     minimum=0.1,
