@@ -17,7 +17,7 @@ def process_controlnet_img(image):
 # load pipelines
 pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell", 
                                     torch_dtype=torch.bfloat16)
-pipe.enable_model_cpu_offload()
+#pipe.enable_model_cpu_offload()
 t5_slider = T5SliderFlux(pipe, device=torch.device("cuda"))
 
 # pipe_adapter = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
