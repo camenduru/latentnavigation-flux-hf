@@ -373,7 +373,7 @@ class T5SliderFlux(CLIPSlider):
         with torch.no_grad():
             positives = []
             negatives = []
-            for i in tqdm(range(self.iterations)):
+            for i in tqdm(range(iterations)):
                 medium = random.choice(MEDIUMS)
                 subject = random.choice(SUBJECTS)
                 pos_prompt = f"a {medium} of a {target_word} {subject}"
