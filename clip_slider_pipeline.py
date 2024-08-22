@@ -481,6 +481,6 @@ class T5SliderFlux(CLIPSlider):
 
             torch.manual_seed(seed)
             images = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
-                               **pipeline_kwargs).images
+                               **pipeline_kwargs).images[0]
 
         return images
