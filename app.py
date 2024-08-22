@@ -7,6 +7,10 @@ import time
 import numpy as np
 import cv2
 from PIL import Image
+from diffusers.utils import load_image
+from diffusers.pipelines.flux.pipeline_flux_controlnet import FluxControlNetPipeline
+from diffusers.models.controlnet_flux import FluxControlNetModel
+
 
 def process_controlnet_img(image):
     controlnet_img = np.array(image)
@@ -20,27 +24,12 @@ pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell",
 #pipe.enable_model_cpu_offload()
 t5_slider = T5SliderFlux(pipe, device=torch.device("cuda"))
 
-# pipe_adapter = StableDiffusionXLPipeline.from_pretrained("sd-community/sdxl-flash").to("cuda", torch.float16)
-# pipe_adapter.scheduler = EulerDiscreteScheduler.from_config(pipe_adapter.scheduler.config)
-# #pipe_adapter.load_ip_adapter("h94/IP-Adapter", subfolder="sdxl_models", weight_name="ip-adapter_sdxl.bin")
-# # scale = 0.8
-# # pipe_adapter.set_ip_adapter_scale(scale)
-# clip_slider_ip = CLIPSliderXL(sd_pipe=pipe_adapter, device=torch.device("cuda"))
+base_model = 'black-forest-labs/FLUX.1-schnell'
+controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
+controlnet = FluxControlNetModel.from_pretrained(controlnet_model, torch_dtype=torch.bfloat16)
+pipe_controlnet = FluxControlNetPipeline.from_pretrained(base_model, controlnet=controlnet, torch_dtype=torch.bfloat16)
+t5_slider_controlnet = T5SliderFlux(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
 
-# controlnet = ControlNetModel.from_pretrained(
-#     "xinsir/controlnet-canny-sdxl-1.0", # insert here your choice of controlnet
-#     torch_dtype=torch.float16
-# )
-# vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
-# pipe_controlnet = StableDiffusionXLControlNetPipeline.from_pretrained(
-#     "sd-community/sdxl-flash",
-#     controlnet=controlnet,
-#     vae=vae,
-#     torch_dtype=torch.float16,
-# )
-# t5_slider_controlnet = T5SliderFlux(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
-
-# clip_slider_inv = CLIPSliderXL_inv(sd_pipe=pipe_inv,device=torch.device("cuda"))
 
 @spaces.GPU(duration=120)
 def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale,
@@ -72,7 +61,7 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale
     
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
-        image = t5_slider.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
+        image = t5_slider_controlnet.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
     elif img2img_type=="ip adapter" and img is not None:
         image = t5_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
     else: # text to image
@@ -98,7 +87,7 @@ def update_scales(x,y,prompt,seed, steps, guidance_scale,
     avg_diff_2nd = avg_diff_y.cuda()
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
-        image = t5_slider.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+        image = t5_slider_controlnet.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     elif img2img_type=="ip adapter" and img is not None:
         image = t5_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     else:     
@@ -197,7 +186,7 @@ with gr.Blocks(css=css) as demo:
                 image = gr.ImageEditor(type="pil", image_mode="L", crop_size=(512, 512))
                 slider_x_a = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
                 slider_y_a = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
-                img2img_type = gr.Radio(["controlnet canny", "ip adapter"], label="", info="")
+                img2img_type = gr.Radio(["controlnet canny", "ip adapter"], label="", info="", visible=False, value="controlnet canny")
                 prompt_a = gr.Textbox(label="Prompt")
                 submit_a = gr.Button("Submit")
             with gr.Column():
@@ -231,6 +220,7 @@ with gr.Blocks(css=css) as demo:
                     maximum=5.0,
                     step=0.1,
                     value=0.8,
+                    visible=False
                 )
             seed_a  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
