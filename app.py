@@ -35,7 +35,7 @@ controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
 def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale,
              x_concept_1, x_concept_2, y_concept_1, y_concept_2, 
              avg_diff_x_1, avg_diff_x_2,
-             avg_diff_y_1, avg_diff_y_2,
+             avg_diff_y_1, avg_diff_y_2,correlation,
              img2img_type = None, img = None, 
              controlnet_scale= None, ip_adapter_scale=None,
              
@@ -61,11 +61,11 @@ def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale
     
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
-        image = t5_slider_controlnet.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
+        image = t5_slider_controlnet.generate(prompt, correlation_weight_factor=correlation, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
     elif img2img_type=="ip adapter" and img is not None:
-        image = t5_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
+        image = t5_slider.generate(prompt, guidance_scale=guidance_scale, correlation_weight_factor=correlation, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
     else: # text to image
-        image = t5_slider.generate(prompt, guidance_scale=guidance_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
+        image = t5_slider.generate(prompt, guidance_scale=guidance_scale, correlation_weight_factor=correlation, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
     
     end_time = time.time()
     print(f"generation time: {end_time - start_time:.2f} ms")
@@ -177,6 +177,13 @@ with gr.Blocks(css=css) as demo:
                     step=0.1,
                     value=5,
                 )
+            correlation = gr.Slider(
+                    label="correlation",
+                    minimum=0.1,
+                    maximum=1.0,
+                    step=0.05,
+                    value=0.6,
+                )
             seed  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
        
@@ -225,13 +232,13 @@ with gr.Blocks(css=css) as demo:
             seed_a  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
     submit.click(fn=generate,
-                     inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y,],
+                     inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y,correlation],
                      outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
 
     generate_butt.click(fn=update_scales, inputs=[x,y, prompt, seed, steps, guidance_scale, avg_diff_x, avg_diff_y], outputs=[output_image])
     generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
     submit_a.click(fn=generate,
-                     inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, guidance_scale_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale],
+                     inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, guidance_scale_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, correlation, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale],
                      outputs=[x_a, y_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image_a])
 
         
