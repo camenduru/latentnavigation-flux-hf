@@ -31,11 +31,11 @@ controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
 # t5_slider_controlnet = T5SliderFlux(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
 
 
-@spaces.GPU(duration=120)
+@spaces.GPU(duration=200)
 def generate(slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale,
              x_concept_1, x_concept_2, y_concept_1, y_concept_2, 
-             avg_diff_x_1, avg_diff_x_2,
-             avg_diff_y_1, avg_diff_y_2,correlation,
+             avg_diff_x, 
+             avg_diff_y,correlation,
              img2img_type = None, img = None, 
              controlnet_scale= None, ip_adapter_scale=None,
              
