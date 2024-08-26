@@ -148,8 +148,8 @@ with gr.Blocks(css=css) as demo:
                   x = gr.Slider(minimum=-4, value=0, maximum=4, elem_id="x", interactive=False)
                   #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
                   output_image = gr.Image(elem_id="image_out")
-                with gr.Row():
-                    generate_butt = gr.Button("generate")
+                # with gr.Row():
+                #     generate_butt = gr.Button("generate")
         
         with gr.Accordion(label="advanced options", open=False):
             iterations = gr.Slider(label = "num iterations", minimum=0, value=300, maximum=400)
@@ -222,7 +222,7 @@ with gr.Blocks(css=css) as demo:
                      inputs=[slider_x, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
                      outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image])
 
-    generate_butt.click(fn=update_scales, inputs=[x, prompt, seed, steps, guidance_scale, avg_diff_x], outputs=[output_image])
+    x.change(fn=update_scales, inputs=[x, prompt, seed, steps, guidance_scale, avg_diff_x], outputs=[output_image])
     # generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
     # submit_a.click(fn=generate,
     #                  inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, guidance_scale_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale],
