@@ -42,6 +42,7 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guida
     # check if avg diff for directions need to be re-calculated
     print("slider_x", slider_x)
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
+    torch.manual_seed(seed)
     
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]) or recalc_directions:
         avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations).to(torch.float16)
@@ -69,6 +70,7 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
                   img2img_type = None, img = None,
                   controlnet_scale= None, ip_adapter_scale=None,):
     avg_diff = avg_diff_x.cuda()
+    torch.manual_seed(seed)
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
         image = t5_slider_controlnet.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=x, seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
