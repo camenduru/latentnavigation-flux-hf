@@ -31,8 +31,8 @@ controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
 
 
 @spaces.GPU(duration=200)
-def generate(slider_x, prompt, seed, iterations, steps, guidance_scale,
-             x_concept_1, x_concept_2,
+def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guidance_scale,
+             x_concept_1, x_concept_2, 
              avg_diff_x, 
              img2img_type = None, img = None, 
              controlnet_scale= None, ip_adapter_scale=None,
@@ -43,11 +43,10 @@ def generate(slider_x, prompt, seed, iterations, steps, guidance_scale,
     print("slider_x", slider_x)
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
     
-    if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]):
+    if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]) or recalc_directions:
         avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations).to(torch.float16)
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
 
-    
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
@@ -100,7 +99,8 @@ def update_y(x,y,prompt,seed, steps,
     image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     return image
 
-
+def reset_recalc_directions():
+    return True
 
 css = '''
 #group {
@@ -135,6 +135,8 @@ with gr.Blocks(css=css) as demo:
 
     avg_diff_x = gr.State()
     #avg_diff_y = gr.State()
+
+    recalc_directions = gr.State(False)
     
     with gr.Tab("text2image"):
         with gr.Row():
@@ -219,9 +221,11 @@ with gr.Blocks(css=css) as demo:
     #                  inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y],
     #                  outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
     submit.click(fn=generate,
-                     inputs=[slider_x, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
+                     inputs=[slider_x, prompt, seed, recalc_directions, iterations, steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
                      outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image])
 
+    iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
+    seed.change(fn=reset_recalc_directions, outputs=[recalc_directions])
     x.change(fn=update_scales, inputs=[x, prompt, seed, steps, guidance_scale, avg_diff_x], outputs=[output_image])
     # generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
     # submit_a.click(fn=generate,
