@@ -457,7 +457,7 @@ class CLIPSliderFlux(CLIPSlider):
             images = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
                                **pipeline_kwargs).images
 
-        return images
+        return images[0]
 
     def spectrum(self,
                  prompt="a photo of a house",
