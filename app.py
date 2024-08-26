@@ -3,7 +3,6 @@ import spaces
 from clip_slider_pipeline import CLIPSliderFlux
 from diffusers import FluxPipeline
 import torch
-import time
 import numpy as np
 import cv2
 from PIL import Image
@@ -39,8 +38,7 @@ def generate(slider_x, prompt, seed, iterations, steps, guidance_scale,
              controlnet_scale= None, ip_adapter_scale=None,
              
              ):
-    
-    start_time = time.time()
+
     # check if avg diff for directions need to be re-calculated
     print("slider_x", slider_x)
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
@@ -49,9 +47,6 @@ def generate(slider_x, prompt, seed, iterations, steps, guidance_scale,
         avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations).to(torch.float16)
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
 
-    print(f"direction time: {end_time - start_time:.2f} ms")
-    
-    start_time = time.time()
     
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
@@ -61,8 +56,6 @@ def generate(slider_x, prompt, seed, iterations, steps, guidance_scale,
     else: # text to image
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff)
     
-    end_time = time.time()
-    print(f"generation time: {end_time - start_time:.2f} ms")
     
     comma_concepts_x = ', '.join(slider_x)
 
