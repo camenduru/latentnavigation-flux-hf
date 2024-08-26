@@ -56,7 +56,8 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guida
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff)
     
     
-    comma_concepts_x = ', '.join(slider_x)
+    #comma_concepts_x = ', '.join(slider_x)
+    comma_concepts_x = f"{slider_x[1]}, {slider_x[0]}"
 
     avg_diff_x = avg_diff.cpu()
   
@@ -154,7 +155,7 @@ with gr.Blocks(css=css) as demo:
                 #     generate_butt = gr.Button("generate")
         
         with gr.Accordion(label="advanced options", open=False):
-            iterations = gr.Slider(label = "num iterations", minimum=0, value=300, maximum=400)
+            iterations = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=400)
             steps = gr.Slider(label = "num inference steps", minimum=1, value=4, maximum=10)
             guidance_scale = gr.Slider(
                     label="Guidance scale",
