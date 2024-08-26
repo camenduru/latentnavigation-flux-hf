@@ -33,16 +33,12 @@ class CLIPSlider:
 
     def find_latent_direction(self,
                               target_word:str,
-                              opposite:str, 
-                              num_iterations: int = None):
+                              opposite:str):
 
         # lets identify a latent direction by taking differences between opposites
         # target_word = "happy"
         # opposite = "sad"
-        if num_iterations is not None: 
-            iterations = num_iterations
-        else:
-            iterations = self.iterations
+
 
         with torch.no_grad():
             positives = []
@@ -78,8 +74,6 @@ class CLIPSlider:
         only_pooler = False,
         normalize_scales = False, # whether to normalize the scales when avg_diff_2nd is not None
         correlation_weight_factor = 1.0,
-        avg_diff = None,
-        avg_diff_2nd = None, 
         **pipeline_kwargs
         ):
         # if doing full sequence, [-0.3,0.3] work well, higher if correlation weighted is true
@@ -90,14 +84,14 @@ class CLIPSlider:
                                   max_length=self.pipe.tokenizer.model_max_length).input_ids.cuda()
         prompt_embeds = self.pipe.text_encoder(toks).last_hidden_state
 
-        if avg_diff_2nd and normalize_scales:
+        if self.avg_diff_2nd and normalize_scales:
             denominator = abs(scale) + abs(scale_2nd)
             scale = scale / denominator
             scale_2nd = scale_2nd / denominator
         if only_pooler:
-            prompt_embeds[:, toks.argmax()] = prompt_embeds[:, toks.argmax()] + avg_diff * scale
-            if avg_diff_2nd:
-                prompt_embeds[:, toks.argmax()] += avg_diff_2nd * scale_2nd
+            prompt_embeds[:, toks.argmax()] = prompt_embeds[:, toks.argmax()] + self.avg_diff * scale
+            if self.avg_diff_2nd:
+                prompt_embeds[:, toks.argmax()] += self.avg_diff_2nd * scale_2nd
         else:
             normed_prompt_embeds = prompt_embeds / prompt_embeds.norm(dim=-1, keepdim=True)
         sims = normed_prompt_embeds[0] @ normed_prompt_embeds[0].T
@@ -109,9 +103,9 @@ class CLIPSlider:
 
         # weights = torch.sigmoid((weights-0.5)*7)
         prompt_embeds = prompt_embeds + (
-                    weights * avg_diff[None, :].repeat(1, self.pipe.tokenizer.model_max_length, 1) * scale)
-        if avg_diff_2nd:
-            prompt_embeds += weights * avg_diff_2nd[None, :].repeat(1, self.pipe.tokenizer.model_max_length, 1) * scale_2nd
+                    weights * self.avg_diff[None, :].repeat(1, self.pipe.tokenizer.model_max_length, 1) * scale)
+        if self.avg_diff_2nd:
+            prompt_embeds += weights * self.avg_diff_2nd[None, :].repeat(1, self.pipe.tokenizer.model_max_length, 1) * scale_2nd
 
 
         torch.manual_seed(seed)
@@ -354,22 +348,21 @@ class CLIPSliderXL_inv(CLIPSlider):
 
         return images
 
-
-class T5SliderFlux(CLIPSlider):
-
+class CLIPSliderFlux(CLIPSlider):
     def find_latent_direction(self,
                               target_word:str,
                               opposite:str,
-                              num_iterations:int ):
+                             num_iterations: int = None):
 
         # lets identify a latent direction by taking differences between opposites
         # target_word = "happy"
         # opposite = "sad"
+
         if num_iterations is not None: 
             iterations = num_iterations
         else:
             iterations = self.iterations
-
+            
         with torch.no_grad():
             positives = []
             negatives = []
@@ -378,31 +371,31 @@ class T5SliderFlux(CLIPSlider):
                 subject = random.choice(SUBJECTS)
                 pos_prompt = f"a {medium} of a {target_word} {subject}"
                 neg_prompt = f"a {medium} of a {opposite} {subject}"
-
-                pos_toks = self.pipe.tokenizer_2(pos_prompt,
-                                                 return_tensors="pt",
-                                                 padding="max_length",
-                                                 truncation=True,
-                                                 return_length=False,
-                                                 return_overflowing_tokens=False,
-                                                 max_length=self.pipe.tokenizer_2.model_max_length).input_ids.cuda()
-                neg_toks = self.pipe.tokenizer_2(neg_prompt,
-                                                 return_tensors="pt",
-                                                 padding="max_length",
-                                                 truncation=True,
-                                                 return_length=False,
-                                                 return_overflowing_tokens=False,
-                                                 max_length=self.pipe.tokenizer_2.model_max_length).input_ids.cuda()
-                pos = self.pipe.text_encoder_2(pos_toks, output_hidden_states=False)[0]
-                neg = self.pipe.text_encoder_2(neg_toks, output_hidden_states=False)[0]
+                pos_toks = self.pipe.tokenizer(pos_prompt,
+                                               padding="max_length",
+                                               max_length=self.pipe.tokenizer_max_length,
+                                               truncation=True,
+                                               return_overflowing_tokens=False,
+                                               return_length=False,
+                                               return_tensors="pt",).input_ids.cuda()
+                neg_toks = self.pipe.tokenizer(neg_prompt,
+                                               padding="max_length",
+                                               max_length=self.pipe.tokenizer_max_length,
+                                               truncation=True,
+                                               return_overflowing_tokens=False,
+                                               return_length=False,
+                                               return_tensors="pt",).input_ids.cuda()
+                pos = self.pipe.text_encoder(pos_toks).pooler_output
+                neg = self.pipe.text_encoder(neg_toks).pooler_output
                 positives.append(pos)
                 negatives.append(neg)
 
         positives = torch.cat(positives, dim=0)
         negatives = torch.cat(negatives, dim=0)
-        diffs = positives - negatives
-        avg_diff = diffs.mean(0, keepdim=True)
 
+        diffs = positives - negatives
+
+        avg_diff = diffs.mean(0, keepdim=True)
         return avg_diff
 
     def generate(self,
@@ -410,9 +403,7 @@ class T5SliderFlux(CLIPSlider):
         scale = 2,
         scale_2nd = 2,
         seed = 15,
-        only_pooler = False,
         normalize_scales = False,
-        correlation_weight_factor = 0.6,
         avg_diff = None,
         avg_diff_2nd = None, 
         **pipeline_kwargs
@@ -453,34 +444,162 @@ class T5SliderFlux(CLIPSlider):
             prompt_embeds = self.pipe.text_encoder_2(toks.to(self.device), output_hidden_states=False)[0]
             dtype = self.pipe.text_encoder_2.dtype
             prompt_embeds = prompt_embeds.to(dtype=dtype, device=self.device)
-            print("1", prompt_embeds.shape)
             if avg_diff_2nd is not None and normalize_scales:
                 denominator = abs(scale) + abs(scale_2nd)
                 scale = scale / denominator
                 scale_2nd = scale_2nd / denominator
+
+            pooled_prompt_embeds = pooled_prompt_embeds + avg_diff * scale
+            if avg_diff_2nd is not None:
+                pooled_prompt_embeds += avg_diff_2nd * scale_2nd
+
+            torch.manual_seed(seed)
+            images = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
+                               **pipeline_kwargs).images
+
+        return images
+
+    def spectrum(self,
+                 prompt="a photo of a house",
+                 low_scale=-2,
+                 low_scale_2nd=-2,
+                 high_scale=2,
+                 high_scale_2nd=2,
+                 steps=5,
+                 seed=15,
+                 normalize_scales=False,
+                 **pipeline_kwargs
+                 ):
+
+        images = []
+        for i in range(steps):
+            scale = low_scale + (high_scale - low_scale) * i / (steps - 1)
+            scale_2nd = low_scale_2nd + (high_scale_2nd - low_scale_2nd) * i / (steps - 1)
+            image = self.generate(prompt, scale, scale_2nd, seed, normalize_scales, **pipeline_kwargs)
+            images.append(image[0].resize((512,512)))
+
+        canvas = Image.new('RGB', (640 * steps, 640))
+        for i, im in enumerate(images):
+            canvas.paste(im, (640 * i, 0))
+
+        return canvas
+class T5SliderFlux(CLIPSlider):
+
+    def find_latent_direction(self,
+                              target_word:str,
+                              opposite:str):
+
+        # lets identify a latent direction by taking differences between opposites
+        # target_word = "happy"
+        # opposite = "sad"
+
+
+        with torch.no_grad():
+            positives = []
+            negatives = []
+            for i in tqdm(range(self.iterations)):
+                medium = random.choice(MEDIUMS)
+                subject = random.choice(SUBJECTS)
+                pos_prompt = f"a {medium} of a {target_word} {subject}"
+                neg_prompt = f"a {medium} of a {opposite} {subject}"
+
+                pos_toks = self.pipe.tokenizer_2(pos_prompt,
+                                                 return_tensors="pt",
+                                                 padding="max_length",
+                                                 truncation=True,
+                                                 return_length=False,
+                                                 return_overflowing_tokens=False,
+                                                 max_length=self.pipe.tokenizer_2.model_max_length).input_ids.cuda()
+                neg_toks = self.pipe.tokenizer_2(neg_prompt,
+                                                 return_tensors="pt",
+                                                 padding="max_length",
+                                                 truncation=True,
+                                                 return_length=False,
+                                                 return_overflowing_tokens=False,
+                                                 max_length=self.pipe.tokenizer_2.model_max_length).input_ids.cuda()
+                pos = self.pipe.text_encoder_2(pos_toks, output_hidden_states=False)[0]
+                neg = self.pipe.text_encoder_2(neg_toks, output_hidden_states=False)[0]
+                positives.append(pos)
+                negatives.append(neg)
+
+        positives = torch.cat(positives, dim=0)
+        negatives = torch.cat(negatives, dim=0)
+        diffs = positives - negatives
+        avg_diff = diffs.mean(0, keepdim=True)
+
+        return avg_diff
+
+    def generate(self,
+        prompt = "a photo of a house",
+        scale = 2,
+        scale_2nd = 2,
+        seed = 15,
+        only_pooler = False,
+        normalize_scales = False,
+        correlation_weight_factor = 1.0,
+        **pipeline_kwargs
+        ):
+        # if doing full sequence, [-0.3,0.3] work well, higher if correlation weighted is true
+        # if pooler token only [-4,4] work well
+
+        with torch.no_grad():
+            text_inputs = self.pipe.tokenizer(
+                prompt,
+                padding="max_length",
+                max_length=77,
+                truncation=True,
+                return_overflowing_tokens=False,
+                return_length=False,
+                return_tensors="pt",
+            )
+
+            text_input_ids = text_inputs.input_ids
+            prompt_embeds = self.pipe.text_encoder(text_input_ids.to(self.device), output_hidden_states=False)
+
+            # Use pooled output of CLIPTextModel
+            prompt_embeds = prompt_embeds.pooler_output
+            pooled_prompt_embeds = prompt_embeds.to(dtype=self.pipe.text_encoder.dtype, device=self.device)
+
+            # Use pooled output of CLIPTextModel
+
+            text_inputs = self.pipe.tokenizer_2(
+                prompt,
+                padding="max_length",
+                max_length=512,
+                truncation=True,
+                return_length=False,
+                return_overflowing_tokens=False,
+                return_tensors="pt",
+            )
+            toks = text_inputs.input_ids
+            prompt_embeds = self.pipe.text_encoder_2(toks.to(self.device), output_hidden_states=False)[0]
+            dtype = self.pipe.text_encoder_2.dtype
+            prompt_embeds = prompt_embeds.to(dtype=dtype, device=self.device)
+            if self.avg_diff_2nd and normalize_scales:
+                denominator = abs(scale) + abs(scale_2nd)
+                scale = scale / denominator
+                scale_2nd = scale_2nd / denominator
             if only_pooler:
-                prompt_embeds[:, toks.argmax()] = prompt_embeds[:, toks.argmax()] + avg_diff * scale
-                if avg_diff_2nd is not None:
-                    prompt_embeds[:, toks.argmax()] += avg_diff_2nd * scale_2nd
+                prompt_embeds[:, toks.argmax()] = prompt_embeds[:, toks.argmax()] + self.avg_diff * scale
+                if self.avg_diff_2nd:
+                    prompt_embeds[:, toks.argmax()] += self.avg_diff_2nd * scale_2nd
             else:
                 normed_prompt_embeds = prompt_embeds / prompt_embeds.norm(dim=-1, keepdim=True)
                 sims = normed_prompt_embeds[0] @ normed_prompt_embeds[0].T
 
                 weights = sims[toks.argmax(), :][None, :, None].repeat(1, 1, prompt_embeds.shape[2])
-                print("weights", weights.shape)
 
                 standard_weights = torch.ones_like(weights)
 
                 weights = standard_weights + (weights - standard_weights) * correlation_weight_factor
                 prompt_embeds = prompt_embeds + (
-                            weights * avg_diff * scale)
-                print("2", prompt_embeds.shape)
-                if avg_diff_2nd is not None:
+                            weights * self.avg_diff * scale)
+                if self.avg_diff_2nd:
                     prompt_embeds += (
-                                weights * avg_diff_2nd * scale_2nd)
+                                weights * self.avg_diff_2nd * scale_2nd)
 
             torch.manual_seed(seed)
             images = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
-                               **pipeline_kwargs).images[0]
+                               **pipeline_kwargs).images
 
         return images
