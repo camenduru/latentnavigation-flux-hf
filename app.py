@@ -130,6 +130,14 @@ css = '''
 #image_out{position:absolute; width: 80%; right: 10px; top: 40px}
 '''
 with gr.Blocks(css=css) as demo:
+    gr.Markdown("""
+           <div style="text-align: center; font-size: 28px; font-weight: bold; margin-bottom: 20px;">
+               Latent Navigation
+           </div>
+           <div style="text-align: center; font-size: 16px; margin-bottom: 20px;">
+               Explorations in CLIP Space 🪐
+           </div>
+               """)
     
     x_concept_1 = gr.State("")
     x_concept_2 = gr.State("")
@@ -141,39 +149,39 @@ with gr.Blocks(css=css) as demo:
 
     recalc_directions = gr.State(False)
     
-    with gr.Tab("text2image"):
-        with gr.Row():
-            with gr.Column():
-                slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
-                #slider_y = gr.Dropdown(label="Slider Y concept range", allow_custom_value=True, multiselect=True, max_choices=2)
-                prompt = gr.Textbox(label="Prompt")
-                submit = gr.Button("find directions")
-            with gr.Column():
-                with gr.Group(elem_id="group"):
-                  x = gr.Slider(minimum=-3, value=0, maximum=3.5, elem_id="x", interactive=False)
-                  #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
-                  output_image = gr.Image(elem_id="image_out")
-                # with gr.Row():
-                #     generate_butt = gr.Button("generate")
-        
-        with gr.Accordion(label="advanced options", open=False):
-            iterations = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=400)
-            steps = gr.Slider(label = "num inference steps", minimum=1, value=4, maximum=10)
-            guidance_scale = gr.Slider(
-                    label="Guidance scale",
-                    minimum=0.1,
-                    maximum=10.0,
-                    step=0.1,
-                    value=5,
-                )
-            # correlation = gr.Slider(
-            #         label="correlation",
-            #         minimum=0.1,
-            #         maximum=1.0,
-            #         step=0.05,
-            #         value=0.6,
-            #     )
-            seed  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
+    #with gr.Tab("text2image"):
+    with gr.Row():
+        with gr.Column():
+            slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
+            #slider_y = gr.Dropdown(label="Slider Y concept range", allow_custom_value=True, multiselect=True, max_choices=2)
+            prompt = gr.Textbox(label="Prompt")
+            submit = gr.Button("find directions")
+        with gr.Column():
+            with gr.Group(elem_id="group"):
+              x = gr.Slider(minimum=-3, value=0, maximum=3.5, elem_id="x", interactive=False)
+              #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
+              output_image = gr.Image(elem_id="image_out")
+            # with gr.Row():
+            #     generate_butt = gr.Button("generate")
+    
+    with gr.Accordion(label="advanced options", open=False):
+        iterations = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=400)
+        steps = gr.Slider(label = "num inference steps", minimum=1, value=4, maximum=10)
+        guidance_scale = gr.Slider(
+                label="Guidance scale",
+                minimum=0.1,
+                maximum=10.0,
+                step=0.1,
+                value=5,
+            )
+        # correlation = gr.Slider(
+        #         label="correlation",
+        #         minimum=0.1,
+        #         maximum=1.0,
+        #         step=0.05,
+        #         value=0.6,
+        #     )
+        seed  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
        
     # with gr.Tab(label="image2image"):
