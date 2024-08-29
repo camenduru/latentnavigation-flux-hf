@@ -150,7 +150,7 @@ with gr.Blocks(css=css) as demo:
                 submit = gr.Button("find directions")
             with gr.Column():
                 with gr.Group(elem_id="group"):
-                  x = gr.Slider(minimum=-4, value=0, maximum=4, elem_id="x", interactive=False)
+                  x = gr.Slider(minimum=-3, value=0, maximum=3.5, elem_id="x", interactive=False)
                   #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
                   output_image = gr.Image(elem_id="image_out")
                 # with gr.Row():
