@@ -116,14 +116,14 @@ css = '''
 
 #x {
     position: absolute;
-    bottom: 140px; /* Further increased bottom margin to move further up */
+    bottom: 100px; /* Further increased bottom margin to move it below the image */
     left: 30px; /* Adjusted left margin */
     width: 540px; /* Increased width to match the new container size */
 }
 
 #y {
     position: absolute;
-    bottom: 220px; /* Increased bottom margin to accommodate the larger #x position */
+    bottom: 200px; /* Increased bottom margin to ensure proper spacing from #x */
     left: 20px; /* Adjusted left margin */
     width: 540px; /* Increased width to match the new container size */
     transform: rotate(-90deg);
@@ -132,12 +132,10 @@ css = '''
 
 #image_out {
     position: absolute;
-    width: 90%; /* Maintain the increased width */
+    width: 80%; /* Adjust width as needed */
     right: 10px;
-    top: 30px; /* Moved further up to ensure no overlap with #x */
+    top: 50px; /* Moved further up to ensure it does not overlap with #x slider */
 }
-
-
 
 '''
 with gr.Blocks(css=css) as demo:
