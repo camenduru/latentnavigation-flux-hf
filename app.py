@@ -134,7 +134,7 @@ css = '''
     position: absolute;
     width: 80%; /* Adjust width as needed */
     right: 10px;
-    top: 50px; /* Moved further up to ensure it does not overlap with #x slider */
+    top: 150px; /* Increased top margin to clear space occupied by #x */
 }
 
 '''
