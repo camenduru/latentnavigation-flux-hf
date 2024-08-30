@@ -140,12 +140,12 @@ css = '''
 '''
 intro = """
 <div style="display: flex;align-items: center;justify-content: center">
-    <img src="https://huggingface.co/spaces/LatentNavigation/latentnavigation-flux/resolve/main/huggy_astronaut_text.png" width="100" style="display: inline-block">
+    <img src="https://huggingface.co/spaces/LatentNavigation/latentnavigation-flux/resolve/main/Group 4-16.png" width="100" style="display: inline-block">
+    <h1 style="margin-left: 12px;text-align: center;margin-bottom: 7px;display: inline-block">Latent Navigation</h1>
 </div>
 <div style="display: flex;align-items: center;justify-content: center">
     <h3 style="display: inline-block;margin-left: 10px;margin-top: 6px;font-weight: 500">Exploring CLIP text space with FLUX.1 schnell 🪐</h3>
 </div>
-
 <p style="font-size: 0.95rem;margin: 0rem;line-height: 1.2em;margin-top:1em;display: inline-block">
     <a href="https://github.com/linoytsaban/semantic-sliders" target="_blank">code</a>
      | 
