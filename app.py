@@ -138,11 +138,30 @@ css = '''
 }
 
 '''
+intro = """
+<div style="display: flex;align-items: center;justify-content: center">
+    <img src="https://huggingface.co/spaces/LatentNavigation/latentnavigation-flux/blob/main/huggy_astronaut_text.png" width="100" style="display: inline-block">
+    <h3 style="display: inline-block;margin-left: 10px;margin-top: 6px;font-weight: 500">Limitless Image Editing using Text-to-Image Models</h3>
+</div>
+<div style="display: flex;align-items: center;justify-content: center">
+    <h3 style="display: inline-block;margin-left: 10px;margin-top: 6px;font-weight: 500">Exploring CLIP text space with FLUX.1 schnell 🪐</h3>
+</div>
+
+<p style="font-size: 0.95rem;margin: 0rem;line-height: 1.2em;margin-top:1em;display: inline-block">
+    <a href="https://github.com/linoytsaban/semantic-sliders" target="_blank">code</a>
+     | 
+    <a href="https://huggingface.co/spaces/LatentNavigation/latentnavigation-flux?duplicate=true" target="_blank" style="
+        display: inline-block;
+    ">
+    <img style="margin-top: -1em;margin-bottom: 0em;position: absolute;" src="https://bit.ly/3CWLGkA" alt="Duplicate Space"></a>
+</p>
+"""
 with gr.Blocks(css=css) as demo:
-    gr.Markdown(f"""# Latent Navigation 
-## Exploring CLIP text space with FLUX.1 schnell 🪐
-[[code](https://github.com/linoytsaban/semantic-sliders)]
-        """)
+#     gr.Markdown(f"""# Latent Navigation 
+# ## Exploring CLIP text space with FLUX.1 schnell 🪐
+# [[code](https://github.com/linoytsaban/semantic-sliders)]
+#         """)
+    gr.HTML(intro)
     
     x_concept_1 = gr.State("")
     x_concept_2 = gr.State("")
