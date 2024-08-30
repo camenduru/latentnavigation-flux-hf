@@ -116,7 +116,7 @@ css = '''
 
 #x {
     position: absolute;
-    bottom: 120px; /* Further increased bottom margin to move it below the image */
+    bottom: 180px; /* Moved further down */
     left: 30px; /* Adjusted left margin */
     width: 540px; /* Increased width to match the new container size */
 }
@@ -134,7 +134,7 @@ css = '''
     position: absolute;
     width: 80%; /* Adjust width as needed */
     right: 10px;
-    top: 150px; /* Increased top margin to clear space occupied by #x */
+    top: 10px; /* Increased top margin to clear space occupied by #x */
 }
 
 '''
