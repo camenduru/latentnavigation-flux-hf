@@ -140,7 +140,7 @@ css = '''
 '''
 intro = """
 <div style="display: flex;align-items: center;justify-content: center">
-    <img src="https://huggingface.co/spaces/LatentNavigation/latentnavigation-flux/blob/main/huggy_astronaut_text.png" width="100" style="display: inline-block">
+    <img src="https://huggingface.co/spaces/LatentNavigation/latentnavigation-flux/resolve/main/huggy_astronaut_text.png" width="100" style="display: inline-block">
 </div>
 <div style="display: flex;align-items: center;justify-content: center">
     <h3 style="display: inline-block;margin-left: 10px;margin-top: 6px;font-weight: 500">Exploring CLIP text space with FLUX.1 schnell 🪐</h3>
