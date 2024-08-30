@@ -116,14 +116,14 @@ css = '''
 
 #x {
     position: absolute;
-    bottom: 80px; /* Increased bottom margin to move further up */
+    bottom: 140px; /* Further increased bottom margin to move further up */
     left: 30px; /* Adjusted left margin */
     width: 540px; /* Increased width to match the new container size */
 }
 
 #y {
     position: absolute;
-    bottom: 160px; /* Increased bottom margin to move further up and avoid overlap */
+    bottom: 220px; /* Increased bottom margin to accommodate the larger #x position */
     left: 20px; /* Adjusted left margin */
     width: 540px; /* Increased width to match the new container size */
     transform: rotate(-90deg);
@@ -132,10 +132,11 @@ css = '''
 
 #image_out {
     position: absolute;
-    width: 90%; /* Increased width */
+    width: 90%; /* Maintain the increased width */
     right: 10px;
-    top: 20px; /* Moved further up */
+    top: 30px; /* Moved further up to ensure no overlap with #x */
 }
+
 
 
 '''
