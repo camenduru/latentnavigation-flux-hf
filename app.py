@@ -108,34 +108,35 @@ def reset_recalc_directions():
 css = '''
 #group {
     position: relative;
-    width: 420px;
-    height: 420px;
+    width: 600px; /* Increased width */
+    height: 600px; /* Increased height */
     margin-bottom: 20px;
     background-color: white;
 }
 
 #x {
     position: absolute;
-    bottom: 40px; /* Ensure there is enough space below the image */
-    left: 25px;
-    width: 400px;
+    bottom: 80px; /* Increased bottom margin to move further up */
+    left: 30px; /* Adjusted left margin */
+    width: 540px; /* Increased width to match the new container size */
 }
 
 #y {
     position: absolute;
-    bottom: 100px; /* Adjusted to ensure no overlap with #x and not too close to the top */
-    left: 10px; /* Adjusted to ensure it's not too close to the edge and not overlapping the image */
-    width: 400px;
+    bottom: 160px; /* Increased bottom margin to move further up and avoid overlap */
+    left: 20px; /* Adjusted left margin */
+    width: 540px; /* Increased width to match the new container size */
     transform: rotate(-90deg);
     transform-origin: left bottom;
 }
 
 #image_out {
     position: absolute;
-    width: 80%;
+    width: 90%; /* Increased width */
     right: 10px;
-    top: 10px; /* Ensure there is enough space for both sliders below */
+    top: 20px; /* Moved further up */
 }
+
 
 '''
 with gr.Blocks(css=css) as demo:
