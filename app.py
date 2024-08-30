@@ -116,7 +116,7 @@ css = '''
 
 #x {
     position: absolute;
-    bottom: 100px; /* Further increased bottom margin to move it below the image */
+    bottom: 120px; /* Further increased bottom margin to move it below the image */
     left: 30px; /* Adjusted left margin */
     width: 540px; /* Increased width to match the new container size */
 }
