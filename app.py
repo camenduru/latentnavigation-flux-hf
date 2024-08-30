@@ -111,33 +111,38 @@ css = '''
     width: 420px;
     height: 420px;
     margin-bottom: 20px;
-    background-color: white
+    background-color: white;
 }
+
 #x {
     position: absolute;
-    bottom: 0;
+    bottom: 40px; /* Ensure there is enough space below the image */
     left: 25px;
     width: 400px;
 }
+
 #y {
     position: absolute;
-    bottom: 20px;
-    left: 67px;
+    bottom: 100px; /* Adjusted to ensure no overlap with #x and not too close to the top */
+    left: 10px; /* Adjusted to ensure it's not too close to the edge and not overlapping the image */
     width: 400px;
     transform: rotate(-90deg);
     transform-origin: left bottom;
 }
-#image_out{position:absolute; width: 80%; right: 10px; top: 40px}
+
+#image_out {
+    position: absolute;
+    width: 80%;
+    right: 10px;
+    top: 10px; /* Ensure there is enough space for both sliders below */
+}
+
 '''
 with gr.Blocks(css=css) as demo:
-    gr.Markdown("""
-           <div style="text-align: center; font-size: 28px; font-weight: bold; margin-bottom: 20px;">
-               Latent Navigation
-           </div>
-           <div style="text-align: center; font-size: 16px; margin-bottom: 20px;">
-               Explorations in CLIP Space 🪐
-           </div>
-               """)
+    gr.Markdown(f"""# Latent Navigation 
+## Exploring CLIP text space with FLUX.1 schnell 🪐
+[[code](https://github.com/linoytsaban/semantic-sliders)]
+        """)
     
     x_concept_1 = gr.State("")
     x_concept_2 = gr.State("")
