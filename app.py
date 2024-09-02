@@ -42,10 +42,11 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guida
     # check if avg diff for directions need to be re-calculated
     print("slider_x", slider_x)
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
-    torch.manual_seed(seed)
+    #torch.manual_seed(seed)
     
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]) or recalc_directions:
-        avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations).to(torch.float16)
+        #avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations).to(torch.float16)
+        avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations)
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
 
     if img2img_type=="controlnet canny" and img is not None:
