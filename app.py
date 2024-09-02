@@ -116,7 +116,7 @@ css = '''
 
 #x {
     position: absolute;
-    bottom: 100px; /* Moved further down */
+    bottom: 20px; /* Moved further down */
     left: 30px; /* Adjusted left margin */
     width: 540px; /* Increased width to match the new container size */
 }
