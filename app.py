@@ -54,7 +54,10 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guida
     elif img2img_type=="ip adapter" and img is not None:
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
     else: # text to image
-        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff)
+        image = clip_slider.generate(prompt, 
+                                     #guidance_scale=guidance_scale, 
+                                     scale=0, scale_2nd=0, 
+                                     seed=seed, num_inference_steps=steps, avg_diff=avg_diff)
     
     
     #comma_concepts_x = ', '.join(slider_x)
