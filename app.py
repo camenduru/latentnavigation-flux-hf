@@ -40,12 +40,22 @@ def convert_to_centered_scale(num):
     return tuple(range(start, end + 1))
 
 @spaces.GPU(duration=200)
-def generate(concept_1, concept_2, scale, prompt, randomize_seed=True, seed=42, recalc_directions=True, iterations=200, steps=4, interm_steps=9, guidance_scale=3.5,
+def generate(concept_1,
+             concept_2,
+             scale,
+             prompt,
+             randomize_seed=True,
+             seed=42,
+             recalc_directions=True,
+             iterations=200, 
+             steps=3, 
+             interm_steps=21, 
+             guidance_scale=3.5,
              x_concept_1="", x_concept_2="", 
              avg_diff_x=None, 
              total_images=[],
              progress=gr.Progress(track_tqdm=True)
-             ):
+    ):
     slider_x = [concept_2, concept_1]
     # check if avg diff for directions need to be re-calculated
     print("slider_x", slider_x)
@@ -119,7 +129,7 @@ examples = [["winter", "summer", 1.25, "a dog in the park"], ["USA suburb", "Eur
 image_seq = gr.Image(label="Strip", elem_id="strip")
 output_image = gr.Image(label="Gif", elem_id="gif")
 post_generation_image = gr.Image(label="Generated Images")
-post_generation_slider = gr.Slider(minimum=-2, maximum=2, value=0, step=1, interactive=False)
+post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1)
 seed = gr.Slider(minimum=0, maximum=MAX_SEED, step=1, label="Seed", interactive=True, randomize=True)
 
 with gr.Blocks(css=css) as demo:
