@@ -195,6 +195,10 @@ css='''
 #strip, #gif{min-height: 50px}
 '''
 examples = [["winter", "summer", 1.25, "a dog in the park"]]
+image_seq = gr.Image(label="Strip", elem_id="strip")
+output_image = gr.Image(label="Gif", elem_id="gif")
+post_generation_image = gr.Image(label="Generated Images")
+post_generation_slider = gr.Slider(minimum=-2, maximum=2, value=0, step=1, interactive=False)
 with gr.Blocks(css=css) as demo:
 
     gr.HTML(intro)
@@ -230,15 +234,15 @@ with gr.Blocks(css=css) as demo:
             )
         with gr.Column():
             with gr.Group(elem_id="group"):
-                post_generation_image = gr.Image(label="Generated Images")
-                post_generation_slider = gr.Slider(minimum=-2, maximum=2, value=0, step=1, interactive=False)
+                post_generation_image.render()
+                post_generation_slider.render()
               #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
             with gr.Row():
                 with gr.Column(scale=4, min_width=50):
-                    image_seq = gr.Image(label="Strip", elem_id="strip")
+                    image_seq.render()
                     
                 with gr.Column(scale=2, min_width=50):
-                    output_image = gr.Image(label="Gif", elem_id="gif")
+                    output_image.render()
             # with gr.Row():
             #     generate_butt = gr.Button("generate")
     
