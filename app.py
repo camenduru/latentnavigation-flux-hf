@@ -82,13 +82,14 @@ def generate(concept_1, concept_2, scale, prompt, seed, recalc_directions, itera
 
     comma_concepts_x = f"{slider_x[1]}, {slider_x[0]}"
 
-    scale_min = convert_to_centered_scale(interm_steps)[0]
-    scale_max = convert_to_centered_scale(interm_steps)[-1]
-
-    post_generation_slider_update = gr.update(minimum=scale_min, maximum=scale_max, visible=True)
+    scale_total = convert_to_centered_scale(interm_steps)
+    scale_min = scale_total[0]
+    scale_max = scale_total[-1]
+    scale_middle = scale_total.index(0)
+    post_generation_slider_update = gr.update(label=comma_concepts_x, minimum=scale_min, maximum=scale_max, interactive=True)
     avg_diff_x = avg_diff.cpu()
     
-    return gr.update(label=comma_concepts_x, interactive=True, value=scale), x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, post_generation_slider_update
+    return gr.update(label=comma_concepts_x, interactive=True, value=scale), x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update 
 
 @spaces.GPU
 def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
@@ -120,12 +121,13 @@ def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
         for i, im in enumerate(images):
             canvas.paste(im.resize((256,256)), (256 * i, 0))
     
-    scale_min = convert_to_centered_scale(interm_steps)[0]
-    scale_max = convert_to_centered_scale(interm_steps)[-1]
-
+    scale_total = convert_to_centered_scale(interm_steps)
+    scale_min = scale_total[0]
+    scale_max = scale_total[-1]
+    scale_middle = scale_total.index(0)
     post_generation_slider_update = gr.update(minimum=scale_min, maximum=scale_max, visible=True)
     
-    return export_to_gif(images, "clip.gif", fps=5), canvas, images, post_generation_slider_update
+    return export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update
 
 def update_pre_generated_images(slider_value, total_images):
     number_images = len(total_images)
@@ -216,9 +218,9 @@ with gr.Blocks() as demo:
                 post_generation_slider = gr.Slider(minimum=-2, maximum=2, value=0, step=1, interactive=False)
               #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
             with gr.Row():
-                with gr.Column(scale=4):
+                with gr.Column(scale=4, min_width=50):
                     output_image = gr.Image(elem_id="image_out", label="Gif")
-                with gr.Column(scale=1):
+                with gr.Column(scale=1, min_width=50):
                     image_seq = gr.Image(label="Strip")
             # with gr.Row():
             #     generate_butt = gr.Button("generate")
@@ -287,16 +289,16 @@ with gr.Blocks() as demo:
     #                  outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
     submit.click(fn=generate,
                      inputs=[concept_1, concept_2, x, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x, total_images],
-                     outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_slider])
+                     outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider])
 
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
     seed.change(fn=reset_recalc_directions, outputs=[recalc_directions])
-    x.release(fn=update_scales, inputs=[x, prompt, seed, steps, interm_steps, guidance_scale, avg_diff_x, total_images], outputs=[output_image, image_seq, total_images, post_generation_slider], trigger_mode='always_last')
+    x.release(fn=update_scales, inputs=[x, prompt, seed, steps, interm_steps, guidance_scale, avg_diff_x, total_images], outputs=[output_image, image_seq, total_images, post_generation_image, post_generation_slider], trigger_mode='always_last')
     # generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
     # submit_a.click(fn=generate,
     #                  inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, guidance_scale_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale],
     #                  outputs=[x_a, y_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image_a])
-    post_generation_slider.release(fn=update_pre_generated_images, inputs=[post_generation_slider, total_images], outputs=[post_generation_image], trigger_mode='always_last')
+    post_generation_slider.change(fn=update_pre_generated_images, inputs=[post_generation_slider, total_images], outputs=[post_generation_image], queue=False)
         
 if __name__ == "__main__":
     demo.launch()
