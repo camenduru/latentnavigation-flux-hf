@@ -185,7 +185,6 @@ with gr.Blocks(css=css) as demo:
                 outputs=[x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider, seed],
                 cache_examples="lazy"
             )
-    examples_gradio.dataset._components = [concept_1, concept_2, prompt]
 
     submit.click(fn=generate,
                      inputs=[concept_1, concept_2, x, prompt, randomize_seed, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x, total_images],
