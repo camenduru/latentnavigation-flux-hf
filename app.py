@@ -118,7 +118,7 @@ intro = """
 </p>
 """
 css='''
-#strip, #gif{max-height: 170px}
+#strip, #gif{max-height: 170px; min-height: 65px}
 '''
 examples = [["a dog in the park", "winter", "summer", 1.25], ["a house", "USA suburb", "Europe", 2], ["a tomato", "rotten", "super fresh", 2]]
 
