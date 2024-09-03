@@ -25,6 +25,7 @@ pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell",
 
 pipe.transformer.to(memory_format=torch.channels_last)
 pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
+#pipe.enable_model_cpu_offload()
 clip_slider = CLIPSliderFlux(pipe, device=torch.device("cuda"))
 
 
@@ -46,6 +47,7 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guida
     # check if avg diff for directions need to be re-calculated
     print("slider_x", slider_x)
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
+    #torch.manual_seed(seed)
     
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]) or recalc_directions:
         #avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations).to(torch.float16)
@@ -63,6 +65,8 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guida
                                      scale=0, scale_2nd=0, 
                                      seed=seed, num_inference_steps=steps, avg_diff=avg_diff)
     
+    
+    #comma_concepts_x = ', '.join(slider_x)
     comma_concepts_x = f"{slider_x[1]}, {slider_x[0]}"
 
     avg_diff_x = avg_diff.cpu()
@@ -75,16 +79,36 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
                   img2img_type = None, img = None,
                   controlnet_scale= None, ip_adapter_scale=None,):
     avg_diff = avg_diff_x.cuda()
+    torch.manual_seed(seed)
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
         image = t5_slider_controlnet.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=x, seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
     elif img2img_type=="ip adapter" and img is not None:
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=x,seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
     else:     
-        image = clip_slider.generate(prompt, 
-                                     #guidance_scale=guidance_scale, 
-                                     scale=x,  
-                                     seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
+        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=x,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
+    return image
+
+
+
+@spaces.GPU
+def update_x(x,y,prompt,seed, steps, 
+             avg_diff_x, avg_diff_y,
+             img2img_type = None,
+             img = None):
+    avg_diff = avg_diff_x.cuda()
+    avg_diff_2nd = avg_diff_y.cuda()
+    image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+    return image
+
+@spaces.GPU
+def update_y(x,y,prompt,seed, steps, 
+             avg_diff_x, avg_diff_y,
+             img2img_type = None,
+             img = None):
+    avg_diff = avg_diff_x.cuda()
+    avg_diff_2nd = avg_diff_y.cuda()
+    image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
     return image
 
 def reset_recalc_directions():
@@ -98,14 +122,12 @@ css = '''
     margin-bottom: 20px;
     background-color: white;
 }
-
 #x {
     position: absolute;
     bottom: 20px; /* Moved further down */
     left: 30px; /* Adjusted left margin */
     width: 540px; /* Increased width to match the new container size */
 }
-
 #y {
     position: absolute;
     bottom: 200px; /* Increased bottom margin to ensure proper spacing from #x */
@@ -114,14 +136,12 @@ css = '''
     transform: rotate(-90deg);
     transform-origin: left bottom;
 }
-
 #image_out {
     position: absolute;
     width: 80%; /* Adjust width as needed */
     right: 10px;
     top: 10px; /* Increased top margin to clear space occupied by #x */
 }
-
 '''
 intro = """
 <div style="display: flex;align-items: center;justify-content: center">
@@ -166,7 +186,7 @@ with gr.Blocks(css=css) as demo:
             submit = gr.Button("find directions")
         with gr.Column():
             with gr.Group(elem_id="group"):
-              x = gr.Slider(minimum=-3, value=0, maximum=3.5, step=0.1, elem_id="x", interactive=False)
+              x = gr.Slider(minimum=-3, value=0, maximum=3.5, elem_id="x", interactive=False)
               #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
               output_image = gr.Image(elem_id="image_out")
             # with gr.Row():
