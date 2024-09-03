@@ -54,7 +54,7 @@ def generate(concept_1, concept_2, scale, prompt, seed, recalc_directions, itera
              avg_diff_x, 
              img2img_type = None, img = None, 
              controlnet_scale= None, ip_adapter_scale=None,
-             total_images
+             total_images=[]
              ):
     slider_x = [concept_1, concept_2]
     # check if avg diff for directions need to be re-calculated
@@ -94,7 +94,7 @@ def generate(concept_1, concept_2, scale, prompt, seed, recalc_directions, itera
 def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
                   avg_diff_x, 
                   img2img_type = None, img = None,
-                  controlnet_scale= None, ip_adapter_scale=None, total_images):
+                  controlnet_scale= None, ip_adapter_scale=None, total_images=[]):
     print("Hola", x)
     avg_diff = avg_diff_x.cuda()
 
