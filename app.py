@@ -227,10 +227,10 @@ with gr.Blocks(css=css) as demo:
             submit = gr.Button("Generate directions")
             gr.Examples(
                 examples=examples,
-                inputs=[concept_1, concept_2, prompt, x],
+                inputs=[concept_1, concept_2, x, prompt],
                 fn=generate,
                 outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider],
-                cache_examples="lazy"
+                cache_examples=True
             )
         with gr.Column():
             with gr.Group(elem_id="group"):
