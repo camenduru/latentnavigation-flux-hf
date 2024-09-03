@@ -9,7 +9,7 @@ from PIL import Image
 from diffusers.utils import load_image
 from diffusers.pipelines.flux.pipeline_flux_controlnet import FluxControlNetPipeline
 from diffusers.models.controlnet_flux import FluxControlNetModel
-
+from diffusers.utils import export_to_gif
 
 def process_controlnet_img(image):
     controlnet_img = np.array(image)
@@ -82,16 +82,26 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
                   controlnet_scale= None, ip_adapter_scale=None,):
     print("Hola", x)
     avg_diff = avg_diff_x.cuda()
+
+    # for spectrum generation
+    images = []
+    steps=5
+    high_scale = x if x > 0 else abs(max(x, -3))
+    low_scale = x if x < 0 else x * (-1)
+    
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
         image = t5_slider_controlnet.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=x, seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
     elif img2img_type=="ip adapter" and img is not None:
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=x,seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
-    else:     
-        image = clip_slider.generate(prompt, 
-                                     #guidance_scale=guidance_scale, 
-                                     scale=x,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
-    return image
+    else:
+        for i in range(steps):
+            cur_scale = low_scale + (high_scale - low_scale) * i / (steps - 1)
+            image = clip_slider.generate(prompt, 
+                                         #guidance_scale=guidance_scale, 
+                                         scale=cur_scale,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
+            images.apped(image)
+    return export_to_gif(images, "clip.gif", fps=5)
 
 
 def reset_recalc_directions():
