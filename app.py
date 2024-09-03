@@ -54,7 +54,8 @@ def generate(concept_1, concept_2, scale, prompt, seed, recalc_directions, itera
              avg_diff_x, 
              img2img_type = None, img = None, 
              controlnet_scale= None, ip_adapter_scale=None,
-             total_images=[]
+             total_images=[],
+             progress=gr.Progress(track_tqdm=True)
              ):
     slider_x = [concept_1, concept_2]
     # check if avg diff for directions need to be re-calculated
@@ -95,7 +96,7 @@ def generate(concept_1, concept_2, scale, prompt, seed, recalc_directions, itera
 def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
                   avg_diff_x, 
                   img2img_type = None, img = None,
-                  controlnet_scale= None, ip_adapter_scale=None, total_images=[]):
+                  controlnet_scale= None, ip_adapter_scale=None, total_images=[], progress=gr.Progress(track_tqdm=True)):
     print("Hola", x)
     avg_diff = avg_diff_x.cuda()
 
@@ -140,7 +141,7 @@ def update_pre_generated_images(slider_value, total_images):
 def reset_recalc_directions():
     return True
 
-css = '''
+css_old = '''
 #group {
     position: relative;
     width: 600px; /* Increased width */
@@ -186,7 +187,10 @@ intro = """
     <img style="margin-top: -1em;margin-bottom: 0em;position: absolute;" src="https://bit.ly/3CWLGkA" alt="Duplicate Space"></a>
 </p>
 """
-with gr.Blocks() as demo:
+css='''
+#strip, #gif{min-height: 50px}
+'''
+with gr.Blocks(css=css) as demo:
 
     gr.HTML(intro)
     
@@ -219,10 +223,10 @@ with gr.Blocks() as demo:
               #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
             with gr.Row():
                 with gr.Column(scale=4, min_width=50):
-                    image_seq = gr.Image(label="Strip")
+                    image_seq = gr.Image(label="Strip", elem_id="strip")
                     
                 with gr.Column(scale=2, min_width=50):
-                    output_image = gr.Image(elem_id="image_out", label="Gif")
+                    output_image = gr.Image(elem_id="image_out", label="Gif", elem_id="gif")
             # with gr.Row():
             #     generate_butt = gr.Button("generate")
     
