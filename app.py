@@ -80,6 +80,7 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
                   avg_diff_x, 
                   img2img_type = None, img = None,
                   controlnet_scale= None, ip_adapter_scale=None,):
+    print("Hola", x)
     avg_diff = avg_diff_x.cuda()
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
@@ -247,7 +248,7 @@ with gr.Blocks(css=css) as demo:
 
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
     seed.change(fn=reset_recalc_directions, outputs=[recalc_directions])
-    x.change(fn=update_scales, inputs=[x, prompt, seed, steps, guidance_scale, avg_diff_x], outputs=[output_image])
+    x.release(fn=update_scales, inputs=[x, prompt, seed, steps, guidance_scale, avg_diff_x], outputs=[output_image], trigger_mode='always_last')
     # generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
     # submit_a.click(fn=generate,
     #                  inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, guidance_scale_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale],
