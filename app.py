@@ -25,9 +25,15 @@ pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell",
 
 pipe.transformer.to(memory_format=torch.channels_last)
 pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
-
+#pipe.enable_model_cpu_offload()
 clip_slider = CLIPSliderFlux(pipe, device=torch.device("cuda"))
 
+
+base_model = 'black-forest-labs/FLUX.1-schnell'
+controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
+# controlnet = FluxControlNetModel.from_pretrained(controlnet_model, torch_dtype=torch.bfloat16)
+# pipe_controlnet = FluxControlNetPipeline.from_pretrained(base_model, controlnet=controlnet, torch_dtype=torch.bfloat16)
+# t5_slider_controlnet = T5SliderFlux(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
 
 @spaces.GPU(duration=200)
 def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guidance_scale,
@@ -41,6 +47,7 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guida
     # check if avg diff for directions need to be re-calculated
     print("slider_x", slider_x)
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
+    #torch.manual_seed(seed)
     
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]) or recalc_directions:
         #avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations).to(torch.float16)
@@ -59,6 +66,7 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guida
                                      seed=seed, num_inference_steps=steps, avg_diff=avg_diff)
     
     
+    #comma_concepts_x = ', '.join(slider_x)
     comma_concepts_x = f"{slider_x[1]}, {slider_x[0]}"
 
     avg_diff_x = avg_diff.cpu()
@@ -71,6 +79,7 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
                   img2img_type = None, img = None,
                   controlnet_scale= None, ip_adapter_scale=None,):
     avg_diff = avg_diff_x.cuda()
+    torch.manual_seed(seed)
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
         image = t5_slider_controlnet.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=x, seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
@@ -80,6 +89,27 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=x,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
     return image
 
+
+
+@spaces.GPU
+def update_x(x,y,prompt,seed, steps, 
+             avg_diff_x, avg_diff_y,
+             img2img_type = None,
+             img = None):
+    avg_diff = avg_diff_x.cuda()
+    avg_diff_2nd = avg_diff_y.cuda()
+    image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+    return image
+
+@spaces.GPU
+def update_y(x,y,prompt,seed, steps, 
+             avg_diff_x, avg_diff_y,
+             img2img_type = None,
+             img = None):
+    avg_diff = avg_diff_x.cuda()
+    avg_diff_2nd = avg_diff_y.cuda()
+    image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
+    return image
 
 def reset_recalc_directions():
     return True
@@ -131,7 +161,10 @@ intro = """
 </p>
 """
 with gr.Blocks(css=css) as demo:
-
+#     gr.Markdown(f"""# Latent Navigation 
+# ## Exploring CLIP text space with FLUX.1 schnell 🪐
+# [[code](https://github.com/linoytsaban/semantic-sliders)]
+#         """)
     gr.HTML(intro)
     
     x_concept_1 = gr.State("")
@@ -144,6 +177,7 @@ with gr.Blocks(css=css) as demo:
 
     recalc_directions = gr.State(False)
     
+    #with gr.Tab("text2image"):
     with gr.Row():
         with gr.Column():
             slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
@@ -168,9 +202,63 @@ with gr.Blocks(css=css) as demo:
                 step=0.1,
                 value=5,
             )
-
+        # correlation = gr.Slider(
+        #         label="correlation",
+        #         minimum=0.1,
+        #         maximum=1.0,
+        #         step=0.05,
+        #         value=0.6,
+        #     )
         seed  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
+       
+    # with gr.Tab(label="image2image"):
+    #     with gr.Row():
+    #         with gr.Column():
+    #             image = gr.ImageEditor(type="pil", image_mode="L", crop_size=(512, 512))
+    #             slider_x_a = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
+    #             slider_y_a = gr.Dropdown(label="Slider X concept range", allow_custom_value=True, multiselect=True, max_choices=2)
+    #             img2img_type = gr.Radio(["controlnet canny", "ip adapter"], label="", info="", visible=False, value="controlnet canny")
+    #             prompt_a = gr.Textbox(label="Prompt")
+    #             submit_a = gr.Button("Submit")
+    #         with gr.Column():
+    #             with gr.Group(elem_id="group"):
+    #               x_a = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="x", interactive=False)
+    #               y_a = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
+    #               output_image_a = gr.Image(elem_id="image_out")
+    #             with gr.Row():
+    #                 generate_butt_a = gr.Button("generate")
+        
+    #     with gr.Accordion(label="advanced options", open=False):
+    #         iterations_a = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=300)
+    #         steps_a = gr.Slider(label = "num inference steps", minimum=1, value=8, maximum=30)
+    #         guidance_scale_a = gr.Slider(
+    #                 label="Guidance scale",
+    #                 minimum=0.1,
+    #                 maximum=10.0,
+    #                 step=0.1,
+    #                 value=5,
+    #             )
+    #         controlnet_conditioning_scale = gr.Slider(
+    #                 label="controlnet conditioning scale",
+    #                 minimum=0.5,
+    #                 maximum=5.0,
+    #                 step=0.1,
+    #                 value=0.7,
+    #             )
+    #         ip_adapter_scale = gr.Slider(
+    #                 label="ip adapter scale",
+    #                 minimum=0.5,
+    #                 maximum=5.0,
+    #                 step=0.1,
+    #                 value=0.8,
+    #                 visible=False
+    #             )
+    #         seed_a  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
+        
+    # submit.click(fn=generate,
+    #                  inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y],
+    #                  outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
     submit.click(fn=generate,
                      inputs=[slider_x, prompt, seed, recalc_directions, iterations, steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
                      outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image])
@@ -178,6 +266,11 @@ with gr.Blocks(css=css) as demo:
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
     seed.change(fn=reset_recalc_directions, outputs=[recalc_directions])
     x.change(fn=update_scales, inputs=[x, prompt, seed, steps, guidance_scale, avg_diff_x], outputs=[output_image])
+    # generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
+    # submit_a.click(fn=generate,
+    #                  inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, guidance_scale_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale],
+    #                  outputs=[x_a, y_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image_a])
+
         
 if __name__ == "__main__":
     demo.launch()
