@@ -36,14 +36,14 @@ controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
 # t5_slider_controlnet = T5SliderFlux(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
 
 @spaces.GPU(duration=200)
-def generate(slider_x, scale, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale,
+def generate(concept_1, concept_2, scale, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale,
              x_concept_1, x_concept_2, 
              avg_diff_x, 
              img2img_type = None, img = None, 
              controlnet_scale= None, ip_adapter_scale=None,
              
              ):
-
+    slider_x = [concept_1, concept_2]
     # check if avg diff for directions need to be re-calculated
     print("slider_x", slider_x)
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
@@ -154,7 +154,7 @@ intro = """
     <img style="margin-top: -1em;margin-bottom: 0em;position: absolute;" src="https://bit.ly/3CWLGkA" alt="Duplicate Space"></a>
 </p>
 """
-with gr.Blocks(css=css) as demo:
+with gr.Blocks() as demo:
 
     gr.HTML(intro)
     
@@ -171,7 +171,10 @@ with gr.Blocks(css=css) as demo:
     #with gr.Tab("text2image"):
     with gr.Row():
         with gr.Column():
-            slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
+            with gr.Row():
+                concept_1 = gr.Textbox(label="A concept to compare")
+                concept_2 = gr.Textbox(label="Concept to compare")
+            #slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             #slider_y = gr.Dropdown(label="Slider Y concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             prompt = gr.Textbox(label="Prompt")
             x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, info="the strength to scale in each direction")
@@ -247,7 +250,7 @@ with gr.Blocks(css=css) as demo:
     #                  inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y],
     #                  outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
     submit.click(fn=generate,
-                     inputs=[slider_x, x, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
+                     inputs=[concept_1, concept_2, x, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
                      outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq])
 
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
