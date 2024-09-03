@@ -40,10 +40,10 @@ def convert_to_centered_scale(num):
     return tuple(range(start, end + 1))
 
 @spaces.GPU(duration=200)
-def generate(concept_1,
+def generate(prompt,
+             concept_1,
              concept_2,
              scale,
-             prompt,
              randomize_seed=True,
              seed=42,
              recalc_directions=True,
@@ -190,7 +190,7 @@ with gr.Blocks(css=css) as demo:
     )
 
     submit.click(fn=generate,
-                     inputs=[concept_1, concept_2, x, prompt, randomize_seed, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x, total_images],
+                     inputs=[prompt, concept_1, concept_2, x, randomize_seed, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x, total_images],
                      outputs=[x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider, seed])
 
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
