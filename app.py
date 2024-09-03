@@ -230,7 +230,7 @@ with gr.Blocks(css=css) as demo:
                 inputs=[concept_1, concept_2, x, prompt],
                 fn=generate,
                 outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider],
-                cache_examples=True
+                cache_examples="lazy"
             )
         with gr.Column():
             with gr.Group(elem_id="group"):
