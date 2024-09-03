@@ -108,6 +108,7 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
             images.append(image)
         canvas = Image.new('RGB', (1280, 256))
         for i, im in enumerate(images):
+            im.resize((256,256))
             canvas.paste(im, (256 * i, 0))
     return export_to_gif(images, "clip.gif", fps=5), canvas
 
