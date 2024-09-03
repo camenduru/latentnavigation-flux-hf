@@ -1,7 +1,7 @@
 import gradio as gr
 import spaces
 from clip_slider_pipeline import CLIPSliderFlux
-from diffusers import FluxPipeline
+from diffusers import FluxPipeline, AutoencoderTiny
 import torch
 import numpy as np
 import cv2
@@ -18,17 +18,21 @@ def process_controlnet_img(image):
     controlnet_img = Image.fromarray(controlnet_img)
 
 # load pipelines
-pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell", 
+taef1 = AutoencoderTiny.from_pretrained("madebyollin/taef1", torch_dtype=dtype).to(device)
+pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell",
+                                    vae=taef1,
                                     torch_dtype=torch.bfloat16)
 #pipe.enable_model_cpu_offload()
 clip_slider = CLIPSliderFlux(pipe, device=torch.device("cuda"))
+
+clip_slider.transformer.to(memory_format=torch.channels_last)
+clip_slider.transformer = torch.compile(clip_slider.unet, mode="max-autotune", fullgraph=True)
 
 base_model = 'black-forest-labs/FLUX.1-schnell'
 controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
 # controlnet = FluxControlNetModel.from_pretrained(controlnet_model, torch_dtype=torch.bfloat16)
 # pipe_controlnet = FluxControlNetPipeline.from_pretrained(base_model, controlnet=controlnet, torch_dtype=torch.bfloat16)
 # t5_slider_controlnet = T5SliderFlux(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
-
 
 @spaces.GPU(duration=200)
 def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guidance_scale,
