@@ -76,7 +76,7 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guida
     return gr.update(label=comma_concepts_x, interactive=True, value=0), x_concept_1, x_concept_2, avg_diff_x
 
 @spaces.GPU
-def update_scales(x,prompt,seed, steps, guidance_scale,
+def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
                   avg_diff_x, 
                   img2img_type = None, img = None,
                   controlnet_scale= None, ip_adapter_scale=None,):
@@ -85,7 +85,6 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
 
     # for spectrum generation
     images = []
-    img_steps=5
 
     high_scale = x
     low_scale = -1 * x
@@ -96,7 +95,7 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
     elif img2img_type=="ip adapter" and img is not None:
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=x,seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
     else:
-        for i in range(img_steps):
+        for i in range(interm_steps):
             cur_scale = low_scale + (high_scale - low_scale) * i / (steps - 1)
             image = clip_slider.generate(prompt, 
                                          #guidance_scale=guidance_scale, 
@@ -180,10 +179,10 @@ with gr.Blocks(css=css) as demo:
             slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             #slider_y = gr.Dropdown(label="Slider Y concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             prompt = gr.Textbox(label="Prompt")
+            x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, elem_id="x", interactive=False, info="the strength to scale in each direction")
             submit = gr.Button("find directions")
         with gr.Column():
             with gr.Group(elem_id="group"):
-              x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, elem_id="x", interactive=False)
               #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
               output_image = gr.Image(elem_id="image_out")
             image_seq = gr.Image()
@@ -193,6 +192,7 @@ with gr.Blocks(css=css) as demo:
     with gr.Accordion(label="advanced options", open=False):
         iterations = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=400)
         steps = gr.Slider(label = "num inference steps", minimum=1, value=4, maximum=10)
+        interm_steps = gr.Slider(label = "num of intermediate images", minimum=1, value=5, maximum=9)
         guidance_scale = gr.Slider(
                 label="Guidance scale",
                 minimum=0.1,
@@ -259,11 +259,11 @@ with gr.Blocks(css=css) as demo:
     #                  outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
     submit.click(fn=generate,
                      inputs=[slider_x, prompt, seed, recalc_directions, iterations, steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
-                     outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image]).then(fn=update_scales, inputs=[x, prompt, seed, steps, guidance_scale, avg_diff_x], outputs=[output_image, image_seq])
+                     outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image]).then(fn=update_scales, inputs=[x, prompt, seed, steps, interm_steps, guidance_scale, avg_diff_x], outputs=[output_image, image_seq])
 
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
     seed.change(fn=reset_recalc_directions, outputs=[recalc_directions])
-    x.release(fn=update_scales, inputs=[x, prompt, seed, steps, guidance_scale, avg_diff_x], outputs=[output_image, image_seq], trigger_mode='always_last')
+    x.release(fn=update_scales, inputs=[x, prompt, seed, steps, interm_steps, guidance_scale, avg_diff_x], outputs=[output_image, image_seq], trigger_mode='always_last')
     # generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
     # submit_a.click(fn=generate,
     #                  inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, guidance_scale_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale],
