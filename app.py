@@ -49,9 +49,9 @@ def convert_to_centered_scale(num):
     return tuple(range(start, end + 1))
 
 @spaces.GPU(duration=200)
-def generate(concept_1, concept_2, scale, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale,
-             x_concept_1, x_concept_2, 
-             avg_diff_x, 
+def generate(concept_1, concept_2, scale, prompt, seed=42, recalc_directions=True, iterations=200, steps=4, interm_steps=9, guidance_scale=3.5,
+             x_concept_1="", x_concept_2="", 
+             avg_diff_x=None, 
              img2img_type = None, img = None, 
              controlnet_scale= None, ip_adapter_scale=None,
              total_images=[],
@@ -194,6 +194,7 @@ intro = """
 css='''
 #strip, #gif{min-height: 50px}
 '''
+examples = [["winter", "summer", 1.25, "a dog in the park"]]
 with gr.Blocks(css=css) as demo:
 
     gr.HTML(intro)
@@ -219,7 +220,14 @@ with gr.Blocks(css=css) as demo:
             #slider_y = gr.Dropdown(label="Slider Y concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             prompt = gr.Textbox(label="Prompt", placeholder="A dog in the park")
             x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, label="Strength", info="maximum strength on each direction")
-            submit = gr.Button("find directions")
+            submit = gr.Button("Generate directions")
+            gr.Examples(
+                examples=examples,
+                inputs=[concept_1, concept_2, prompt, x],
+                fn=generate,
+                outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider],
+                cache_examples="lazy"
+            )
         with gr.Column():
             with gr.Group(elem_id="group"):
                 post_generation_image = gr.Image(label="Generated Images")
