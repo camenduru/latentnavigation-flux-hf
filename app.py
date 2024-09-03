@@ -24,7 +24,7 @@ pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell",
                                     torch_dtype=torch.bfloat16)
 
 pipe.transformer.to(memory_format=torch.channels_last)
-#pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
+pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
 #pipe.enable_model_cpu_offload()
 clip_slider = CLIPSliderFlux(pipe, device=torch.device("cuda"))
 
@@ -74,6 +74,8 @@ def generate(concept_1, concept_2, scale, prompt, seed, recalc_directions, itera
     for i in range(interm_steps):
         cur_scale = low_scale + (high_scale - low_scale) * i / (interm_steps - 1)
         image = clip_slider.generate(prompt, 
+                                     width=768,
+                                     height=768,
                                      #guidance_scale=guidance_scale, 
                                      scale=cur_scale,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
         images.append(image)
@@ -115,6 +117,8 @@ def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
         for i in range(interm_steps):
             cur_scale = low_scale + (high_scale - low_scale) * i / (steps - 1)
             image = clip_slider.generate(prompt, 
+                                         width=768,
+                                         height=768,
                                          #guidance_scale=guidance_scale, 
                                          scale=cur_scale,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
             images.append(image)
