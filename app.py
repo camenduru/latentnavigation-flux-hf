@@ -123,7 +123,7 @@ intro = """
 </p>
 """
 css='''
-#strip, #gif{min-height: 50px; height: auto !important}
+#strip, #gif{max-height: 170px}
 '''
 examples = [["a dog in the park", "winter", "summer", 1.25], ["a house", "USA suburb", "Europe", 2], ["a tomato", "rotten", "super fresh", 2]]
 image_seq = gr.Image(label="Strip", elem_id="strip", height=50)
