@@ -10,6 +10,7 @@ from diffusers.utils import load_image
 from diffusers.pipelines.flux.pipeline_flux_controlnet import FluxControlNetPipeline
 from diffusers.models.controlnet_flux import FluxControlNetModel
 from diffusers.utils import export_to_gif
+import random
 
 def process_controlnet_img(image):
     controlnet_img = np.array(image)
