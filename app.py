@@ -126,8 +126,8 @@ css='''
 #strip, #gif{max-height: 170px}
 '''
 examples = [["a dog in the park", "winter", "summer", 1.25], ["a house", "USA suburb", "Europe", 2], ["a tomato", "rotten", "super fresh", 2]]
-image_seq = gr.Image(label="Strip", elem_id="strip", height=50)
-output_image = gr.Image(label="Gif", elem_id="gif", height=50)
+image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
+output_image = gr.Image(label="Gif", elem_id="gif")
 post_generation_image = gr.Image(label="Generated Images")
 post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1)
 seed = gr.Slider(minimum=0, maximum=MAX_SEED, step=1, label="Seed", interactive=True, randomize=True)
