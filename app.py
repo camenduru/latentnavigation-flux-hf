@@ -198,7 +198,7 @@ intro = """
 css='''
 #strip, #gif{min-height: 50px}
 '''
-examples = [["winter", "summer", 1.25, "a dog in the park"], ["USA suburb", "Europe", 2, "a house"]]
+examples = [["winter", "summer", 1.25, "a dog in the park"], ["USA suburb", "Europe", 2, "a house"], ["rotten", "super fresh", 2, "a tomato"]]
 image_seq = gr.Image(label="Strip", elem_id="strip")
 output_image = gr.Image(label="Gif", elem_id="gif")
 post_generation_image = gr.Image(label="Generated Images")
@@ -251,7 +251,7 @@ with gr.Blocks(css=css) as demo:
             #     generate_butt = gr.Button("generate")
     
     with gr.Accordion(label="advanced options", open=False):
-        iterations = gr.Slider(label = "num iterations for clip directions", minimum=0, value=200, maximum=400, step=1)
+        iterations = gr.Slider(label = "num iterations for clip directions", minimum=0, value=200, maximum=500, step=1)
         steps = gr.Slider(label = "num inference steps", minimum=1, value=4, maximum=8, step=1)
         interm_steps = gr.Slider(label = "num of intermediate images", minimum=3, value=5, maximum=65, step=2)
         guidance_scale = gr.Slider(
