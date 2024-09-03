@@ -219,9 +219,10 @@ with gr.Blocks() as demo:
               #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
             with gr.Row():
                 with gr.Column(scale=4, min_width=50):
-                    output_image = gr.Image(elem_id="image_out", label="Gif")
-                with gr.Column(scale=1, min_width=50):
                     image_seq = gr.Image(label="Strip")
+                    
+                with gr.Column(scale=2, min_width=50):
+                    output_image = gr.Image(elem_id="image_out", label="Gif")
             # with gr.Row():
             #     generate_butt = gr.Button("generate")
     
