@@ -81,37 +81,17 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
                   img2img_type = None, img = None,
                   controlnet_scale= None, ip_adapter_scale=None,):
     avg_diff = avg_diff_x.cuda()
-    torch.manual_seed(seed)
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
         image = t5_slider_controlnet.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=x, seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
     elif img2img_type=="ip adapter" and img is not None:
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=x,seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
     else:     
-        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, scale=x,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
+        image = clip_slider.generate(prompt, 
+                                     #guidance_scale=guidance_scale, 
+                                     scale=x,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
     return image
 
-
-
-@spaces.GPU
-def update_x(x,y,prompt,seed, steps, 
-             avg_diff_x, avg_diff_y,
-             img2img_type = None,
-             img = None):
-    avg_diff = avg_diff_x.cuda()
-    avg_diff_2nd = avg_diff_y.cuda()
-    image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
-    return image
-
-@spaces.GPU
-def update_y(x,y,prompt,seed, steps, 
-             avg_diff_x, avg_diff_y,
-             img2img_type = None,
-             img = None):
-    avg_diff = avg_diff_x.cuda()
-    avg_diff_2nd = avg_diff_y.cuda()
-    image = clip_slider.generate(prompt, scale=x, scale_2nd=y, seed=seed, num_inference_steps=steps, avg_diff=avg_diff,avg_diff_2nd=avg_diff_2nd) 
-    return image
 
 def reset_recalc_directions():
     return True
@@ -188,7 +168,7 @@ with gr.Blocks(css=css) as demo:
             submit = gr.Button("find directions")
         with gr.Column():
             with gr.Group(elem_id="group"):
-              x = gr.Slider(minimum=-3, value=0, maximum=3.5, elem_id="x", interactive=False)
+              x = gr.Slider(minimum=-3, value=0, step=0.1, maximum=3.5, elem_id="x", interactive=False)
               #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
               output_image = gr.Image(elem_id="image_out")
             # with gr.Row():
