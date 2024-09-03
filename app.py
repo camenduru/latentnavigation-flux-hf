@@ -73,7 +73,7 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guida
 
     avg_diff_x = avg_diff.cpu()
   
-    return gr.update(label=comma_concepts_x, interactive=True, value=0), x_concept_1, x_concept_2, avg_diff_x, image
+    return gr.update(label=comma_concepts_x, interactive=True, value=0), x_concept_1, x_concept_2, avg_diff_x
 
 @spaces.GPU
 def update_scales(x,prompt,seed, steps, guidance_scale,
@@ -183,7 +183,7 @@ with gr.Blocks(css=css) as demo:
             submit = gr.Button("find directions")
         with gr.Column():
             with gr.Group(elem_id="group"):
-              x = gr.Slider(minimum=0, value=0, step=0.1, maximum=2.5, elem_id="x", interactive=False)
+              x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, elem_id="x", interactive=False)
               #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
               output_image = gr.Image(elem_id="image_out")
             image_seq = gr.Image()
@@ -259,7 +259,7 @@ with gr.Blocks(css=css) as demo:
     #                  outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
     submit.click(fn=generate,
                      inputs=[slider_x, prompt, seed, recalc_directions, iterations, steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
-                     outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image])
+                     outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image]).then(fn=update_scales, inputs=[x, prompt, seed, steps, guidance_scale, avg_diff_x], outputs=[output_image, image_seq])
 
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
     seed.change(fn=reset_recalc_directions, outputs=[recalc_directions])
