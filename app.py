@@ -35,6 +35,8 @@ controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
 # pipe_controlnet = FluxControlNetPipeline.from_pretrained(base_model, controlnet=controlnet, torch_dtype=torch.bfloat16)
 # t5_slider_controlnet = T5SliderFlux(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
 
+MAX_SEED = 2**32-1
+
 def convert_to_centered_scale(num):
     if num <= 0:
         raise ValueError("Input must be a positive integer")
@@ -49,7 +51,7 @@ def convert_to_centered_scale(num):
     return tuple(range(start, end + 1))
 
 @spaces.GPU(duration=200)
-def generate(concept_1, concept_2, scale, prompt, seed=42, recalc_directions=True, iterations=200, steps=4, interm_steps=9, guidance_scale=3.5,
+def generate(concept_1, concept_2, scale, prompt, randomize_seed=True, seed=42, recalc_directions=True, iterations=200, steps=4, interm_steps=9, guidance_scale=3.5,
              x_concept_1="", x_concept_2="", 
              avg_diff_x=None, 
              img2img_type = None, img = None, 
@@ -57,12 +59,14 @@ def generate(concept_1, concept_2, scale, prompt, seed=42, recalc_directions=Tru
              total_images=[],
              progress=gr.Progress(track_tqdm=True)
              ):
-    slider_x = [concept_1, concept_2]
+    slider_x = [concept_2, concept_1]
     # check if avg diff for directions need to be re-calculated
     print("slider_x", slider_x)
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
     #torch.manual_seed(seed)
-    
+    if randomize_seed:
+            seed = random.randint(0, MAX_SEED)
+        
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]) or recalc_directions:
         #avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations).to(torch.float16)
         avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations)
@@ -92,7 +96,7 @@ def generate(concept_1, concept_2, scale, prompt, seed=42, recalc_directions=Tru
     post_generation_slider_update = gr.update(label=comma_concepts_x, value=0, minimum=scale_min, maximum=scale_max, interactive=True)
     avg_diff_x = avg_diff.cpu()
     
-    return gr.update(label=comma_concepts_x, interactive=True, value=scale), x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update 
+    return x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update, seed
 
 @spaces.GPU
 def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
@@ -194,7 +198,7 @@ intro = """
 css='''
 #strip, #gif{min-height: 50px}
 '''
-examples = [["winter", "summer", 1.25, "a dog in the park"]]
+examples = [["winter", "summer", 1.25, "a dog in the park"], ["USA suburb", "Europe", 2, "a house"], ["rotten", "super fresh", 2, "a tomato"]]
 image_seq = gr.Image(label="Strip", elem_id="strip")
 output_image = gr.Image(label="Gif", elem_id="gif")
 post_generation_image = gr.Image(label="Generated Images")
@@ -218,12 +222,12 @@ with gr.Blocks(css=css) as demo:
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                concept_1 = gr.Textbox(label="1st concept to compare", placeholder="winter")
-                concept_2 = gr.Textbox(label="2nd concept to compare", placeholder="summer")
+                concept_1 = gr.Textbox(label="1st direction to steer", placeholder="winter")
+                concept_2 = gr.Textbox(label="2nd direction to steer", placeholder="summer")
             #slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             #slider_y = gr.Dropdown(label="Slider Y concept range", allow_custom_value=True, multiselect=True, max_choices=2)
-            prompt = gr.Textbox(label="Prompt", placeholder="A dog in the park")
-            x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, label="Strength", info="maximum strength on each direction")
+            prompt = gr.Textbox(label="Prompt", info="Describe what you to be steered by the directions", placeholder="A dog in the park")
+            x = gr.Slider(minimum=0, value=1.5, step=0.1, maximum=4.0, label="Strength", info="maximum strength on each direction (unstable beyond 2.5)")
             submit = gr.Button("Generate directions")
             gr.Examples(
                 examples=examples,
@@ -247,18 +251,18 @@ with gr.Blocks(css=css) as demo:
             #     generate_butt = gr.Button("generate")
     
     with gr.Accordion(label="advanced options", open=False):
-        iterations = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=400)
-        steps = gr.Slider(label = "num inference steps", minimum=1, value=4, maximum=10)
-        interm_steps = gr.Slider(label = "num of intermediate images", minimum=1, value=5, maximum=65)
+        iterations = gr.Slider(label = "num iterations for clip directions", minimum=0, value=200, maximum=500, step=1)
+        steps = gr.Slider(label = "num inference steps", minimum=1, value=3, maximum=8, step=1)
+        interm_steps = gr.Slider(label = "num of intermediate images", minimum=3, value=21, maximum=65, step=2)
         guidance_scale = gr.Slider(
                 label="Guidance scale",
                 minimum=0.1,
                 maximum=10.0,
                 step=0.1,
-                value=5,
+                value=3.5,
             )
-
-        seed  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
+        randomize_seed = gr.Checkbox(True, label="Randomize seed")
+        seed = gr.Slider(minimum=0, maximum=MAX_SEED, step=1, label="Seed", interactive=True, randomize=True)
         
        
     # with gr.Tab(label="image2image"):
@@ -309,8 +313,8 @@ with gr.Blocks(css=css) as demo:
     #                  inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y],
     #                  outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
     submit.click(fn=generate,
-                     inputs=[concept_1, concept_2, x, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x, total_images],
-                     outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider])
+                     inputs=[concept_1, concept_2, x, prompt, randomize_seed, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x, total_images],
+                     outputs=[x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider, seed])
 
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
     seed.change(fn=reset_recalc_directions, outputs=[recalc_directions])
