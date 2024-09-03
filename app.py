@@ -172,12 +172,12 @@ with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                concept_1 = gr.Textbox(label="A concept to compare")
-                concept_2 = gr.Textbox(label="Concept to compare")
+                concept_1 = gr.Textbox(label="1st concept to compare", placeholder="winter")
+                concept_2 = gr.Textbox(label="2nd concept to compare", placeholder="summer")
             #slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             #slider_y = gr.Dropdown(label="Slider Y concept range", allow_custom_value=True, multiselect=True, max_choices=2)
-            prompt = gr.Textbox(label="Prompt")
-            x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, info="the strength to scale in each direction")
+            prompt = gr.Textbox(label="Prompt", placeholder="A dog in the park")
+            x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, label="Strength", info="maximum strength on each direction")
             submit = gr.Button("find directions")
         with gr.Column():
             with gr.Group(elem_id="group"):
