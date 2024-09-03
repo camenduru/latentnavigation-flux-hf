@@ -18,7 +18,7 @@ def process_controlnet_img(image):
     controlnet_img = Image.fromarray(controlnet_img)
 
 # load pipelines
-taef1 = AutoencoderTiny.from_pretrained("madebyollin/taef1", torch_dtype=dtype).to(device)
+taef1 = AutoencoderTiny.from_pretrained("madebyollin/taef1", torch_dtype=torch.bfloat16).to(device)
 pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell",
                                     vae=taef1,
                                     torch_dtype=torch.bfloat16)
