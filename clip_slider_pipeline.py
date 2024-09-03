@@ -412,6 +412,7 @@ class CLIPSliderFlux(CLIPSlider):
         # if pooler token only [-4,4] work well
 
         with torch.no_grad():
+            print("WTF 1.25")
             text_inputs = self.pipe.tokenizer(
                 prompt,
                 padding="max_length",
@@ -453,9 +454,11 @@ class CLIPSliderFlux(CLIPSlider):
             if avg_diff_2nd is not None:
                 pooled_prompt_embeds += avg_diff_2nd * scale_2nd
 
+            print("WTF 1.5")
             torch.manual_seed(seed)
             images = self.pipe(prompt_embeds=prompt_embeds, pooled_prompt_embeds=pooled_prompt_embeds,
                                **pipeline_kwargs).images
+            print("WTF 1.75")
 
         return images[0]
 
