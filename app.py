@@ -194,7 +194,7 @@ intro = """
 css='''
 #strip, #gif{min-height: 50px}
 '''
-examples = [["winter", "summer", 1.25, "a dog in the park"]]
+examples = [["winter", "summer", 1.25, "a dog in the park"], ["USA suburb", "Europe", 2, "a house"]]
 image_seq = gr.Image(label="Strip", elem_id="strip")
 output_image = gr.Image(label="Gif", elem_id="gif")
 post_generation_image = gr.Image(label="Generated Images")
@@ -222,7 +222,7 @@ with gr.Blocks(css=css) as demo:
                 concept_2 = gr.Textbox(label="2nd direction to steer", placeholder="summer")
             #slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             #slider_y = gr.Dropdown(label="Slider Y concept range", allow_custom_value=True, multiselect=True, max_choices=2)
-            prompt = gr.Textbox(label="Prompt", placeholder="A dog in the park")
+            prompt = gr.Textbox(label="Prompt", info="Describe what you to be steered by the directions", placeholder="A dog in the park")
             x = gr.Slider(minimum=0, value=1.5, step=0.1, maximum=4.0, label="Strength", info="maximum strength on each direction (unstable beyond 2.5)")
             submit = gr.Button("Generate directions")
             gr.Examples(
