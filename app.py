@@ -108,7 +108,7 @@ def reset_recalc_directions():
 intro = """
 <div style="display: flex;align-items: center;justify-content: center">
     <img src="https://huggingface.co/spaces/LatentNavigation/latentnavigation-flux/resolve/main/Group 4-16.png" width="120" style="display: inline-block">
-    <h1 style="margin-left: 12px;text-align: center;margin-bottom: 7px;display: inline-block;font-size:1.1em">Latent Navigation</h1>
+    <h1 style="margin-left: 12px;text-align: center;margin-bottom: 7px;display: inline-block;font-size:1.75em">Latent Navigation</h1>
 </div>
 <div style="display: flex;align-items: center;justify-content: center">
     <h3 style="display: inline-block;margin-left: 10px;margin-top: 6px;font-weight: 500">Exploring CLIP text space with FLUX.1 schnell 🪐</h3>
@@ -125,7 +125,7 @@ intro = """
 css='''
 #strip, #gif{min-height: 50px}
 '''
-examples = [["winter", "summer", 1.25, "a dog in the park"], ["USA suburb", "Europe", 2, "a house"], ["rotten", "super fresh", 2, "a tomato"]]
+examples = [["a dog in the park", "winter", "summer", 1.25], ["a house", "USA suburb", "Europe", 2], ["a tomato", "rotten", "super fresh", 2]]
 image_seq = gr.Image(label="Strip", elem_id="strip", height=50)
 output_image = gr.Image(label="Gif", elem_id="gif", height=50)
 post_generation_image = gr.Image(label="Generated Images")
@@ -164,19 +164,22 @@ with gr.Blocks(css=css) as demo:
                 with gr.Column(scale=2, min_width=50):
                     output_image.render()
     
-    with gr.Accordion(label="advanced options", open=False):
-        iterations = gr.Slider(label = "num iterations for clip directions", minimum=0, value=200, maximum=500, step=1)
-        steps = gr.Slider(label = "num inference steps", minimum=1, value=3, maximum=8, step=1)
-        interm_steps = gr.Slider(label = "num of intermediate images", minimum=3, value=21, maximum=65, step=2)
-        guidance_scale = gr.Slider(
-            label="Guidance scale",
-            minimum=0.1,
-            maximum=10.0,
-            step=0.1,
-            value=3.5,
-        )
-        randomize_seed = gr.Checkbox(True, label="Randomize seed")
-        seed.render()
+    with gr.Accordion(label="Advanced options", open=False):
+        interm_steps = gr.Slider(label = "Num of intermediate images", minimum=3, value=21, maximum=65, step=2)
+        with gr.Row():
+            iterations = gr.Slider(label = "Num iterations for clip directions", minimum=0, value=200, maximum=500, step=1)
+            steps = gr.Slider(label = "Num inference steps", minimum=1, value=3, maximum=8, step=1)
+        with gr.Row():
+            guidance_scale = gr.Slider(
+                label="Guidance scale",
+                minimum=0.1,
+                maximum=10.0,
+                step=0.1,
+                value=3.5,
+            )
+            with gr.Column():
+                randomize_seed = gr.Checkbox(True, label="Randomize seed")
+                seed.render()
 
     examples_gradio = gr.Examples(
                 examples=examples,
@@ -184,7 +187,7 @@ with gr.Blocks(css=css) as demo:
                 fn=generate,
                 outputs=[x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider, seed],
                 cache_examples="lazy"
-            )
+    )
 
     submit.click(fn=generate,
                      inputs=[concept_1, concept_2, x, prompt, randomize_seed, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x, total_images],
