@@ -35,6 +35,8 @@ controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
 # pipe_controlnet = FluxControlNetPipeline.from_pretrained(base_model, controlnet=controlnet, torch_dtype=torch.bfloat16)
 # t5_slider_controlnet = T5SliderFlux(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
 
+MAX_SEED = 2**32-1
+
 def convert_to_centered_scale(num):
     if num <= 0:
         raise ValueError("Input must be a positive integer")
@@ -49,7 +51,7 @@ def convert_to_centered_scale(num):
     return tuple(range(start, end + 1))
 
 @spaces.GPU(duration=200)
-def generate(concept_1, concept_2, scale, prompt, seed=42, recalc_directions=True, iterations=200, steps=4, interm_steps=9, guidance_scale=3.5,
+def generate(concept_1, concept_2, scale, prompt, randomize_seed=True, seed=42, recalc_directions=True, iterations=200, steps=4, interm_steps=9, guidance_scale=3.5,
              x_concept_1="", x_concept_2="", 
              avg_diff_x=None, 
              img2img_type = None, img = None, 
@@ -62,7 +64,9 @@ def generate(concept_1, concept_2, scale, prompt, seed=42, recalc_directions=Tru
     print("slider_x", slider_x)
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
     #torch.manual_seed(seed)
-    
+    if randomize_seed:
+            seed = random.randint(0, MAX_SEED)
+        
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]) or recalc_directions:
         #avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations).to(torch.float16)
         avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations)
@@ -92,7 +96,7 @@ def generate(concept_1, concept_2, scale, prompt, seed=42, recalc_directions=Tru
     post_generation_slider_update = gr.update(label=comma_concepts_x, value=0, minimum=scale_min, maximum=scale_max, interactive=True)
     avg_diff_x = avg_diff.cpu()
     
-    return x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update 
+    return x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update, seed
 
 @spaces.GPU
 def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
@@ -257,8 +261,8 @@ with gr.Blocks(css=css) as demo:
                 step=0.1,
                 value=3.5,
             )
-
-        seed  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
+        randomize_seed = gr.Checkbox(True, label="Randomize seed")
+        seed = gr.Slider(minimum=0, maximum=MAX_SEED, step=1, label="Seed", interactive=True, randomize=True)
         
        
     # with gr.Tab(label="image2image"):
@@ -309,8 +313,8 @@ with gr.Blocks(css=css) as demo:
     #                  inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y],
     #                  outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
     submit.click(fn=generate,
-                     inputs=[concept_1, concept_2, x, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x, total_images],
-                     outputs=[x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider])
+                     inputs=[concept_1, concept_2, x, prompt, randomize_seed, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x, total_images],
+                     outputs=[x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider, seed])
 
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
     seed.change(fn=reset_recalc_directions, outputs=[recalc_directions])
