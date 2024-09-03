@@ -87,12 +87,8 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
     images = []
     img_steps=5
 
-    if x < 0:
-        high_scale = 0
-        low_scale = x
-    else:
-        high_scale = x
-        low_scale = 0
+    high_scale = x
+    low_scale = -1 * x
     
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
@@ -108,8 +104,7 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
             images.append(image)
         canvas = Image.new('RGB', (1280, 256))
         for i, im in enumerate(images):
-            im.resize((256,256))
-            canvas.paste(im, (256 * i, 0))
+            canvas.paste(im.resize((256,256)), (256 * i, 0))
     return export_to_gif(images, "clip.gif", fps=5), canvas
 
 
@@ -188,7 +183,7 @@ with gr.Blocks(css=css) as demo:
             submit = gr.Button("find directions")
         with gr.Column():
             with gr.Group(elem_id="group"):
-              x = gr.Slider(minimum=-3, value=0, step=0.1, maximum=3.5, elem_id="x", interactive=False)
+              x = gr.Slider(minimum=0, value=0, step=0.1, maximum=2.5, elem_id="x", interactive=False)
               #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
               output_image = gr.Image(elem_id="image_out")
             image_seq = gr.Image()
