@@ -101,7 +101,7 @@ def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
                                          #guidance_scale=guidance_scale, 
                                          scale=cur_scale,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
             images.append(image)
-        canvas = Image.new('RGB', (1280, 256))
+        canvas = Image.new('RGB', (256*interm_steps, 256))
         for i, im in enumerate(images):
             canvas.paste(im.resize((256,256)), (256 * i, 0))
     return export_to_gif(images, "clip.gif", fps=5), canvas
@@ -179,7 +179,7 @@ with gr.Blocks(css=css) as demo:
             slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             #slider_y = gr.Dropdown(label="Slider Y concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             prompt = gr.Textbox(label="Prompt")
-            x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, elem_id="x", interactive=False, info="the strength to scale in each direction")
+            x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, interactive=False, info="the strength to scale in each direction")
             submit = gr.Button("find directions")
         with gr.Column():
             with gr.Group(elem_id="group"):
@@ -192,7 +192,7 @@ with gr.Blocks(css=css) as demo:
     with gr.Accordion(label="advanced options", open=False):
         iterations = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=400)
         steps = gr.Slider(label = "num inference steps", minimum=1, value=4, maximum=10)
-        interm_steps = gr.Slider(label = "num of intermediate images", minimum=1, value=5, maximum=9)
+        interm_steps = gr.Slider(label = "num of intermediate images", minimum=1, value=5, maximum=65)
         guidance_scale = gr.Slider(
                 label="Guidance scale",
                 minimum=0.1,
