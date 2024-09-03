@@ -36,7 +36,7 @@ controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
 # t5_slider_controlnet = T5SliderFlux(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
 
 @spaces.GPU(duration=200)
-def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guidance_scale,
+def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale,
              x_concept_1, x_concept_2, 
              avg_diff_x, 
              img2img_type = None, img = None, 
@@ -54,26 +54,24 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guida
         avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations)
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
 
-    if img2img_type=="controlnet canny" and img is not None:
-        control_img = process_controlnet_img(img)
-        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, image=control_img, controlnet_conditioning_scale =controlnet_scale, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
-    elif img2img_type=="ip adapter" and img is not None:
-        image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=0, scale_2nd=0, seed=seed, num_inference_steps=steps, avg_diff=avg_diff, avg_diff_2nd=avg_diff_2nd)
-    else: # text to image
-        print("WHY 1")
+    images = []
+    high_scale = x
+    low_scale = -1 * x
+    for i in range(interm_steps):
+        cur_scale = low_scale + (high_scale - low_scale) * i / (steps - 1)
         image = clip_slider.generate(prompt, 
                                      #guidance_scale=guidance_scale, 
-                                     scale=0, scale_2nd=0, 
-                                     seed=seed, num_inference_steps=steps, avg_diff=avg_diff)
-        print("HI 2")
-    
-    
-    #comma_concepts_x = ', '.join(slider_x)
+                                     scale=cur_scale,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
+        images.append(image)
+    canvas = Image.new('RGB', (256*interm_steps, 256))
+    for i, im in enumerate(images):
+        canvas.paste(im.resize((256,256)), (256 * i, 0))
+
     comma_concepts_x = f"{slider_x[1]}, {slider_x[0]}"
 
     avg_diff_x = avg_diff.cpu()
   
-    return gr.update(label=comma_concepts_x, interactive=True, value=0), x_concept_1, x_concept_2, avg_diff_x
+    return gr.update(label=comma_concepts_x, interactive=True, value=0), x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas
 
 @spaces.GPU
 def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
@@ -157,10 +155,7 @@ intro = """
 </p>
 """
 with gr.Blocks(css=css) as demo:
-#     gr.Markdown(f"""# Latent Navigation 
-# ## Exploring CLIP text space with FLUX.1 schnell 🪐
-# [[code](https://github.com/linoytsaban/semantic-sliders)]
-#         """)
+
     gr.HTML(intro)
     
     x_concept_1 = gr.State("")
@@ -200,13 +195,7 @@ with gr.Blocks(css=css) as demo:
                 step=0.1,
                 value=5,
             )
-        # correlation = gr.Slider(
-        #         label="correlation",
-        #         minimum=0.1,
-        #         maximum=1.0,
-        #         step=0.05,
-        #         value=0.6,
-        #     )
+
         seed  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
         
        
@@ -258,8 +247,8 @@ with gr.Blocks(css=css) as demo:
     #                  inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y],
     #                  outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
     submit.click(fn=generate,
-                     inputs=[slider_x, prompt, seed, recalc_directions, iterations, steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
-                     outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image]).then(fn=update_scales, inputs=[x, prompt, seed, steps, interm_steps, guidance_scale, avg_diff_x], outputs=[output_image, image_seq])
+                     inputs=[slider_x, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
+                     outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq])
 
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
     seed.change(fn=reset_recalc_directions, outputs=[recalc_directions])
