@@ -36,7 +36,7 @@ controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
 # t5_slider_controlnet = T5SliderFlux(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
 
 @spaces.GPU(duration=200)
-def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale,
+def generate(slider_x, scale, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale,
              x_concept_1, x_concept_2, 
              avg_diff_x, 
              img2img_type = None, img = None, 
@@ -55,8 +55,8 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, inter
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
 
     images = []
-    high_scale = x
-    low_scale = -1 * x
+    high_scale = scale
+    low_scale = -1 * scale
     for i in range(interm_steps):
         cur_scale = low_scale + (high_scale - low_scale) * i / (steps - 1)
         image = clip_slider.generate(prompt, 
@@ -71,7 +71,7 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, inter
 
     avg_diff_x = avg_diff.cpu()
   
-    return gr.update(label=comma_concepts_x, interactive=True, value=0), x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas
+    return gr.update(label=comma_concepts_x, interactive=True, value=scale), x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas
 
 @spaces.GPU
 def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
@@ -174,7 +174,7 @@ with gr.Blocks(css=css) as demo:
             slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             #slider_y = gr.Dropdown(label="Slider Y concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             prompt = gr.Textbox(label="Prompt")
-            x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, interactive=False, info="the strength to scale in each direction")
+            x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, info="the strength to scale in each direction")
             submit = gr.Button("find directions")
         with gr.Column():
             with gr.Group(elem_id="group"):
@@ -247,7 +247,7 @@ with gr.Blocks(css=css) as demo:
     #                  inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y],
     #                  outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
     submit.click(fn=generate,
-                     inputs=[slider_x, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
+                     inputs=[slider_x, x, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
                      outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq])
 
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
