@@ -24,7 +24,7 @@ pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell",
                                     torch_dtype=torch.bfloat16)
 
 pipe.transformer.to(memory_format=torch.channels_last)
-pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
+#pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
 #pipe.enable_model_cpu_offload()
 clip_slider = CLIPSliderFlux(pipe, device=torch.device("cuda"))
 
@@ -35,13 +35,26 @@ controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
 # pipe_controlnet = FluxControlNetPipeline.from_pretrained(base_model, controlnet=controlnet, torch_dtype=torch.bfloat16)
 # t5_slider_controlnet = T5SliderFlux(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
 
+def convert_to_centered_scale(num):
+    if num <= 0:
+        raise ValueError("Input must be a positive integer")
+    
+    if num % 2 == 0:  # even
+        start = -(num // 2 - 1)
+        end = num // 2
+    else:  # odd
+        start = -(num // 2)
+        end = num // 2
+    
+    return tuple(range(start, end + 1))
+
 @spaces.GPU(duration=200)
 def generate(concept_1, concept_2, scale, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale,
              x_concept_1, x_concept_2, 
              avg_diff_x, 
              img2img_type = None, img = None, 
              controlnet_scale= None, ip_adapter_scale=None,
-             
+             total_images
              ):
     slider_x = [concept_1, concept_2]
     # check if avg diff for directions need to be re-calculated
@@ -58,7 +71,7 @@ def generate(concept_1, concept_2, scale, prompt, seed, recalc_directions, itera
     high_scale = scale
     low_scale = -1 * scale
     for i in range(interm_steps):
-        cur_scale = low_scale + (high_scale - low_scale) * i / (steps - 1)
+        cur_scale = low_scale + (high_scale - low_scale) * i / (interm_steps - 1)
         image = clip_slider.generate(prompt, 
                                      #guidance_scale=guidance_scale, 
                                      scale=cur_scale,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
@@ -69,15 +82,19 @@ def generate(concept_1, concept_2, scale, prompt, seed, recalc_directions, itera
 
     comma_concepts_x = f"{slider_x[1]}, {slider_x[0]}"
 
+    scale_min = convert_to_centered_scale(interm_steps)[0]
+    scale_max = convert_to_centered_scale(interm_steps)[-1]
+
+    post_generation_slider_update = gr.update(minimum=scale_min, maximum=scale_max, visible=True)
     avg_diff_x = avg_diff.cpu()
-  
-    return gr.update(label=comma_concepts_x, interactive=True, value=scale), x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas
+    
+    return gr.update(label=comma_concepts_x, interactive=True, value=scale), x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, post_generation_slider_update
 
 @spaces.GPU
 def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
                   avg_diff_x, 
                   img2img_type = None, img = None,
-                  controlnet_scale= None, ip_adapter_scale=None,):
+                  controlnet_scale= None, ip_adapter_scale=None, total_images):
     print("Hola", x)
     avg_diff = avg_diff_x.cuda()
 
@@ -102,9 +119,22 @@ def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
         canvas = Image.new('RGB', (256*interm_steps, 256))
         for i, im in enumerate(images):
             canvas.paste(im.resize((256,256)), (256 * i, 0))
-    return export_to_gif(images, "clip.gif", fps=5), canvas
+    
+    scale_min = convert_to_centered_scale(interm_steps)[0]
+    scale_max = convert_to_centered_scale(interm_steps)[-1]
 
+    post_generation_slider_update = gr.update(minimum=scale_min, maximum=scale_max, visible=True)
+    
+    return export_to_gif(images, "clip.gif", fps=5), canvas, images, post_generation_slider_update
 
+def update_pre_generated_images(slider_value, total_images):
+    number_images = len(total_images)
+    if(number_images > 0):
+        scale_tuple = convert_to_centered_scale(number_images)
+        return total_images[scale_tuple.index(slider_value)]
+    else:
+        return None
+    
 def reset_recalc_directions():
     return True
 
@@ -160,6 +190,7 @@ with gr.Blocks() as demo:
     
     x_concept_1 = gr.State("")
     x_concept_2 = gr.State("")
+    total_images = gr.State([])
     # y_concept_1 = gr.State("")
     # y_concept_2 = gr.State("")
 
@@ -181,9 +212,14 @@ with gr.Blocks() as demo:
             submit = gr.Button("find directions")
         with gr.Column():
             with gr.Group(elem_id="group"):
+                post_generation_image = gr.Image(label="Generated Images")
+                post_generation_slider = gr.Slider(minimum=-2, maximum=2, value=0, step=1, interactive=False)
               #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
-              output_image = gr.Image(elem_id="image_out", label="Gif")
-            image_seq = gr.Image(label="Strip")
+            with gr.Row():
+                with gr.Column(scale=4):
+                    output_image = gr.Image(elem_id="image_out", label="Gif")
+                with gr.Column(scale=1):
+                    image_seq = gr.Image(label="Strip")
             # with gr.Row():
             #     generate_butt = gr.Button("generate")
     
@@ -250,17 +286,17 @@ with gr.Blocks() as demo:
     #                  inputs=[slider_x, slider_y, prompt, seed, iterations, steps, guidance_scale, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y],
     #                  outputs=[x, y, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image])
     submit.click(fn=generate,
-                     inputs=[concept_1, concept_2, x, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x],
-                     outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq])
+                     inputs=[concept_1, concept_2, x, prompt, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x, total_images],
+                     outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_slider])
 
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
     seed.change(fn=reset_recalc_directions, outputs=[recalc_directions])
-    x.release(fn=update_scales, inputs=[x, prompt, seed, steps, interm_steps, guidance_scale, avg_diff_x], outputs=[output_image, image_seq], trigger_mode='always_last')
+    x.release(fn=update_scales, inputs=[x, prompt, seed, steps, interm_steps, guidance_scale, avg_diff_x, total_images], outputs=[output_image, image_seq, total_images, post_generation_slider], trigger_mode='always_last')
     # generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
     # submit_a.click(fn=generate,
     #                  inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, guidance_scale_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale],
     #                  outputs=[x_a, y_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, output_image_a])
-
+    post_generation_slider.release(fn=update_pre_generated_images, inputs=[post_generation_slider, total_images], outputs=[post_generation_image], trigger_mode='always_last')
         
 if __name__ == "__main__":
     demo.launch()
