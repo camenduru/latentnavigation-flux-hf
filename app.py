@@ -100,7 +100,7 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
             image = clip_slider.generate(prompt, 
                                          #guidance_scale=guidance_scale, 
                                          scale=cur_scale,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
-            images.apped(image)
+            images.append(image)
     return export_to_gif(images, "clip.gif", fps=5)
 
 
