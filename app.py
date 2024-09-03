@@ -226,7 +226,7 @@ with gr.Blocks(css=css) as demo:
                     image_seq = gr.Image(label="Strip", elem_id="strip")
                     
                 with gr.Column(scale=2, min_width=50):
-                    output_image = gr.Image(elem_id="image_out", label="Gif", elem_id="gif")
+                    output_image = gr.Image(label="Gif", elem_id="gif")
             # with gr.Row():
             #     generate_butt = gr.Button("generate")
     
