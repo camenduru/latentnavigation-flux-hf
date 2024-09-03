@@ -73,7 +73,7 @@ def generate(slider_x, prompt, seed, recalc_directions, iterations, steps, guida
 
     avg_diff_x = avg_diff.cpu()
   
-    return gr.update(label=comma_concepts_x, interactive=True), x_concept_1, x_concept_2, avg_diff_x, image
+    return gr.update(label=comma_concepts_x, interactive=True, value=0), x_concept_1, x_concept_2, avg_diff_x, image
 
 @spaces.GPU
 def update_scales(x,prompt,seed, steps, guidance_scale,
