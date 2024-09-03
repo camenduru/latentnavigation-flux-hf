@@ -85,9 +85,14 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
 
     # for spectrum generation
     images = []
-    steps=5
-    high_scale = x if x > 0 else abs(max(x, -3))
-    low_scale = x if x < 0 else x * (-1)
+    img_steps=5
+
+    if x < 0:
+        high_scale = 0
+        low_scale = x
+    else:
+        high_scale = x
+        low_scale = 0
     
     if img2img_type=="controlnet canny" and img is not None:
         control_img = process_controlnet_img(img)
@@ -95,13 +100,16 @@ def update_scales(x,prompt,seed, steps, guidance_scale,
     elif img2img_type=="ip adapter" and img is not None:
         image = clip_slider.generate(prompt, guidance_scale=guidance_scale, ip_adapter_image=img, scale=x,seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
     else:
-        for i in range(steps):
+        for i in range(img_steps):
             cur_scale = low_scale + (high_scale - low_scale) * i / (steps - 1)
             image = clip_slider.generate(prompt, 
                                          #guidance_scale=guidance_scale, 
                                          scale=cur_scale,  seed=seed, num_inference_steps=steps, avg_diff=avg_diff) 
             images.append(image)
-    return export_to_gif(images, "clip.gif", fps=5)
+        canvas = Image.new('RGB', (1280, 256))
+        for i, im in enumerate(images):
+            canvas.paste(im, (256 * i, 0))
+    return export_to_gif(images, "clip.gif", fps=5), canvas
 
 
 def reset_recalc_directions():
@@ -182,6 +190,7 @@ with gr.Blocks(css=css) as demo:
               x = gr.Slider(minimum=-3, value=0, step=0.1, maximum=3.5, elem_id="x", interactive=False)
               #y = gr.Slider(minimum=-10, value=0, maximum=10, elem_id="y", interactive=False)
               output_image = gr.Image(elem_id="image_out")
+            image_seq = gr.Image()
             # with gr.Row():
             #     generate_butt = gr.Button("generate")
     
@@ -258,7 +267,7 @@ with gr.Blocks(css=css) as demo:
 
     iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
     seed.change(fn=reset_recalc_directions, outputs=[recalc_directions])
-    x.release(fn=update_scales, inputs=[x, prompt, seed, steps, guidance_scale, avg_diff_x], outputs=[output_image], trigger_mode='always_last')
+    x.release(fn=update_scales, inputs=[x, prompt, seed, steps, guidance_scale, avg_diff_x], outputs=[output_image, image_seq], trigger_mode='always_last')
     # generate_butt_a.click(fn=update_scales, inputs=[x_a,y_a, prompt_a, seed_a, steps_a, guidance_scale_a, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale], outputs=[output_image_a])
     # submit_a.click(fn=generate,
     #                  inputs=[slider_x_a, slider_y_a, prompt_a, seed_a, iterations_a, steps_a, guidance_scale_a, x_concept_1, x_concept_2, y_concept_1, y_concept_2, avg_diff_x, avg_diff_y, img2img_type, image, controlnet_conditioning_scale, ip_adapter_scale],
