@@ -22,11 +22,12 @@ taef1 = AutoencoderTiny.from_pretrained("madebyollin/taef1", torch_dtype=torch.b
 pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell",
                                     vae=taef1,
                                     torch_dtype=torch.bfloat16)
+
+pipe.transformer.to(memory_format=torch.channels_last)
+pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
 #pipe.enable_model_cpu_offload()
 clip_slider = CLIPSliderFlux(pipe, device=torch.device("cuda"))
 
-clip_slider.transformer.to(memory_format=torch.channels_last)
-clip_slider.transformer = torch.compile(clip_slider.unet, mode="max-autotune", fullgraph=True)
 
 base_model = 'black-forest-labs/FLUX.1-schnell'
 controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
