@@ -19,19 +19,20 @@ def process_controlnet_img(image):
     controlnet_img = Image.fromarray(controlnet_img)
 
 # load pipelines
+base_model = "black-forest-labs/FLUX.1-schnell"
+
 taef1 = AutoencoderTiny.from_pretrained("madebyollin/taef1", torch_dtype=torch.bfloat16).to("cuda")
-pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell",
+pipe = FluxPipeline.from_pretrained(base_model,
                                     vae=taef1,
                                     torch_dtype=torch.bfloat16)
 
 pipe.transformer.to(memory_format=torch.channels_last)
-pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
-#pipe.enable_model_cpu_offload()
+# pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
+# pipe.enable_model_cpu_offload()
 clip_slider = CLIPSliderFlux(pipe, device=torch.device("cuda"))
 
 
-base_model = 'black-forest-labs/FLUX.1-schnell'
-controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
+# controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny-alpha'
 # controlnet = FluxControlNetModel.from_pretrained(controlnet_model, torch_dtype=torch.bfloat16)
 # pipe_controlnet = FluxControlNetPipeline.from_pretrained(base_model, controlnet=controlnet, torch_dtype=torch.bfloat16)
 # t5_slider_controlnet = T5SliderFlux(sd_pipe=pipe_controlnet,device=torch.device("cuda"))
@@ -97,7 +98,7 @@ def generate(concept_1, concept_2, scale, prompt, randomize_seed=True, seed=42, 
     post_generation_slider_update = gr.update(label=comma_concepts_x, value=0, minimum=scale_min, maximum=scale_max, interactive=True)
     avg_diff_x = avg_diff.cpu()
     
-    return x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update, seed
+    return x_concept_1,x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update, seed
 
 @spaces.GPU
 def update_scales(x,prompt,seed, steps, interm_steps, guidance_scale,
@@ -234,7 +235,7 @@ with gr.Blocks(css=css) as demo:
                 examples=examples,
                 inputs=[concept_1, concept_2, x, prompt],
                 fn=generate,
-                outputs=[x, x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider],
+                outputs=[x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider, seed],
                 cache_examples="lazy"
             )
         with gr.Column():
