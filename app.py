@@ -57,7 +57,7 @@ def generate(concept_1, concept_2, scale, prompt, seed=42, recalc_directions=Tru
              total_images=[],
              progress=gr.Progress(track_tqdm=True)
              ):
-    slider_x = [concept_1, concept_2]
+    slider_x = [concept_2, concept_1]
     # check if avg diff for directions need to be re-calculated
     print("slider_x", slider_x)
     print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
@@ -223,7 +223,7 @@ with gr.Blocks(css=css) as demo:
             #slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             #slider_y = gr.Dropdown(label="Slider Y concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             prompt = gr.Textbox(label="Prompt", placeholder="A dog in the park")
-            x = gr.Slider(minimum=0, value=1.25, step=0.1, maximum=2.5, label="Strength", info="maximum strength on each direction")
+            x = gr.Slider(minimum=0, value=1.5, step=0.1, maximum=4.0, label="Strength", info="maximum strength on each direction")
             submit = gr.Button("Generate directions")
             gr.Examples(
                 examples=examples,
@@ -247,15 +247,15 @@ with gr.Blocks(css=css) as demo:
             #     generate_butt = gr.Button("generate")
     
     with gr.Accordion(label="advanced options", open=False):
-        iterations = gr.Slider(label = "num iterations", minimum=0, value=200, maximum=400)
-        steps = gr.Slider(label = "num inference steps", minimum=1, value=4, maximum=10)
-        interm_steps = gr.Slider(label = "num of intermediate images", minimum=1, value=5, maximum=65)
+        iterations = gr.Slider(label = "num iterations for clip directions", minimum=0, value=200, maximum=400, step=1)
+        steps = gr.Slider(label = "num inference steps", minimum=1, value=4, maximum=8, step=1)
+        interm_steps = gr.Slider(label = "num of intermediate images", minimum=3, value=5, maximum=65, step=2)
         guidance_scale = gr.Slider(
                 label="Guidance scale",
                 minimum=0.1,
                 maximum=10.0,
                 step=0.1,
-                value=5,
+                value=3.5,
             )
 
         seed  = gr.Slider(minimum=0, maximum=np.iinfo(np.int32).max, label="Seed", interactive=True, randomize=True)
