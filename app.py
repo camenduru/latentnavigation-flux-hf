@@ -23,20 +23,15 @@ pipe.transformer.to(memory_format=torch.channels_last)
 # pipe.enable_model_cpu_offload()
 clip_slider = CLIPSliderFlux(pipe, device=torch.device("cuda"))
 
-
 MAX_SEED = 2**32-1
 
 def convert_to_centered_scale(num):
-    if num <= 0:
-        raise ValueError("Input must be a positive integer")
-    
     if num % 2 == 0:  # even
         start = -(num // 2 - 1)
         end = num // 2
     else:  # odd
         start = -(num // 2)
-        end = num // 2
-    
+        end = num // 2 
     return tuple(range(start, end + 1))
 
 @spaces.GPU(duration=200)
@@ -126,11 +121,6 @@ css='''
 #strip, #gif{max-height: 170px}
 '''
 examples = [["a dog in the park", "winter", "summer", 1.25], ["a house", "USA suburb", "Europe", 2], ["a tomato", "rotten", "super fresh", 2]]
-image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
-output_image = gr.Image(label="Gif", elem_id="gif")
-post_generation_image = gr.Image(label="Generated Images")
-post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1)
-seed = gr.Slider(minimum=0, maximum=MAX_SEED, step=1, label="Seed", interactive=True, randomize=True)
 
 with gr.Blocks(css=css) as demo:
 
@@ -155,14 +145,14 @@ with gr.Blocks(css=css) as demo:
             
         with gr.Column():
             with gr.Group(elem_id="group"):
-                post_generation_image.render()
-                post_generation_slider.render()
+                post_generation_image = gr.Image(label="Generated Images")
+                post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1)
             with gr.Row():
                 with gr.Column(scale=4, min_width=50):
-                    image_seq.render()
+                    image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
                     
                 with gr.Column(scale=2, min_width=50):
-                    output_image.render()
+                    output_image = gr.Image(label="Gif", elem_id="gif")
     
     with gr.Accordion(label="Advanced options", open=False):
         interm_steps = gr.Slider(label = "Num of intermediate images", minimum=3, value=21, maximum=65, step=2)
@@ -179,7 +169,7 @@ with gr.Blocks(css=css) as demo:
             )
             with gr.Column():
                 randomize_seed = gr.Checkbox(True, label="Randomize seed")
-                seed.render()
+                seed = gr.Slider(minimum=0, maximum=MAX_SEED, step=1, label="Seed", interactive=True, randomize=True)
 
     examples_gradio = gr.Examples(
                 examples=examples,
