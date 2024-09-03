@@ -218,8 +218,8 @@ with gr.Blocks(css=css) as demo:
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                concept_1 = gr.Textbox(label="1st concept to compare", placeholder="winter")
-                concept_2 = gr.Textbox(label="2nd concept to compare", placeholder="summer")
+                concept_1 = gr.Textbox(label="1st direction to steer", placeholder="winter")
+                concept_2 = gr.Textbox(label="2nd direction to steer", placeholder="summer")
             #slider_x = gr.Dropdown(label="Slider concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             #slider_y = gr.Dropdown(label="Slider Y concept range", allow_custom_value=True, multiselect=True, max_choices=2)
             prompt = gr.Textbox(label="Prompt", placeholder="A dog in the park")
