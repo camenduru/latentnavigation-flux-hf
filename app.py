@@ -252,8 +252,8 @@ with gr.Blocks(css=css) as demo:
     
     with gr.Accordion(label="advanced options", open=False):
         iterations = gr.Slider(label = "num iterations for clip directions", minimum=0, value=200, maximum=500, step=1)
-        steps = gr.Slider(label = "num inference steps", minimum=1, value=4, maximum=8, step=1)
-        interm_steps = gr.Slider(label = "num of intermediate images", minimum=3, value=5, maximum=65, step=2)
+        steps = gr.Slider(label = "num inference steps", minimum=1, value=3, maximum=8, step=1)
+        interm_steps = gr.Slider(label = "num of intermediate images", minimum=3, value=21, maximum=65, step=2)
         guidance_scale = gr.Slider(
                 label="Guidance scale",
                 minimum=0.1,
