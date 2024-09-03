@@ -89,7 +89,7 @@ def generate(concept_1, concept_2, scale, prompt, seed=42, recalc_directions=Tru
     scale_min = scale_total[0]
     scale_max = scale_total[-1]
     scale_middle = scale_total.index(0)
-    post_generation_slider_update = gr.update(label=comma_concepts_x, minimum=scale_min, maximum=scale_max, interactive=True)
+    post_generation_slider_update = gr.update(label=comma_concepts_x, value=0, minimum=scale_min, maximum=scale_max, interactive=True)
     avg_diff_x = avg_diff.cpu()
     
     return gr.update(label=comma_concepts_x, interactive=True, value=scale), x_concept_1, x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update 
