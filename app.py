@@ -89,6 +89,8 @@ def generate(prompt,
     return x_concept_1,x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update, seed
 
 def update_pre_generated_images(slider_value, total_images):
+    print(total_images)
+    print(slider_value)
     number_images = len(total_images)
     if(number_images > 0):
         scale_tuple = convert_to_centered_scale(number_images)
@@ -173,20 +175,34 @@ with gr.Blocks(css=css) as demo:
                 seed = gr.Slider(minimum=0, maximum=MAX_SEED, step=1, label="Seed", interactive=True, randomize=True)
 
     examples_gradio = gr.Examples(
-                examples=examples,
-                inputs=[prompt, concept_1, concept_2, x],
-                fn=generate,
-                outputs=[x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider, seed],
-                cache_examples="lazy"
+        examples=examples,
+        inputs=[prompt, concept_1, concept_2, x],
+        fn=generate,
+        outputs=[x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider, seed],
+        cache_examples="lazy"
     )
 
-    submit.click(fn=generate,
-                     inputs=[prompt, concept_1, concept_2, x, randomize_seed, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x, total_images],
-                     outputs=[x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider, seed])
-
-    iterations.change(fn=reset_recalc_directions, outputs=[recalc_directions])
-    seed.change(fn=reset_recalc_directions, outputs=[recalc_directions])
-    post_generation_slider.change(fn=update_pre_generated_images, inputs=[post_generation_slider, total_images], outputs=[post_generation_image], queue=False, show_progress="hidden", concurrency_limit=None)
+    submit.click(
+        fn=generate,
+        inputs=[prompt, concept_1, concept_2, x, randomize_seed, seed, recalc_directions, iterations, steps, interm_steps, guidance_scale, x_concept_1, x_concept_2, avg_diff_x, total_images],
+        outputs=[x_concept_1, x_concept_2, avg_diff_x, output_image, image_seq, total_images, post_generation_image, post_generation_slider, seed]
+    )
+    iterations.change(
+        fn=reset_recalc_directions,
+        outputs=[recalc_directions]
+    )
+    seed.change(
+        fn=reset_recalc_directions,
+        outputs=[recalc_directions]
+    )
+    post_generation_slider.change(
+        fn=update_pre_generated_images,
+        inputs=[post_generation_slider, total_images],
+        outputs=[post_generation_image],
+        queue=False,
+        show_progress="hidden",
+        concurrency_limit=None
+    )
         
 if __name__ == "__main__":
     demo.launch()
