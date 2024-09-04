@@ -148,7 +148,7 @@ with gr.Blocks(css=css) as demo:
             
         with gr.Column():
             with gr.Group(elem_id="group"):
-                post_generation_image = gr.Image(label="Generated Images")
+                post_generation_image = gr.Image(label="Generated Images", type="filepath")
                 post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1)
             with gr.Row():
                 with gr.Column(scale=4, min_width=50):
