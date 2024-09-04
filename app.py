@@ -160,13 +160,15 @@ with gr.Blocks(css=css) as demo:
             prompt = gr.Textbox(label="Prompt", info="Describe what to be steered by the directions", placeholder="A dog in the park")
             x = gr.Slider(minimum=0, value=1.75, step=0.1, maximum=4.0, label="Strength", info="maximum strength on each direction (unstable beyond 2.5)")
             submit = gr.Button("Generate directions")
-            image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
         with gr.Column():
-            output_image = gr.Video(label="Looping video", elem_id="video", loop=True, autoplay=True)
             with gr.Group(elem_id="group"):
                 post_generation_image = gr.Image(label="Generated Images", type="filepath", elem_id="interactive")
                 post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1, label="From 1st to 2nd direction")
-            
+    with gr.Row():
+        with gr.Column(scale=3):
+            image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
+        with gr.Column(scale=2):
+            output_image = gr.Video(label="Looping video", elem_id="video", loop=True, autoplay=True)
     with gr.Accordion(label="Advanced options", open=False):
         interm_steps = gr.Slider(label = "Num of intermediate images", minimum=3, value=7, maximum=65, step=2)
         with gr.Row():
