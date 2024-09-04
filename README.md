@@ -1,8 +1,8 @@
 ---
-title: Latentnavigation
-emoji: 🏢
+title: Latent Navigation
+emoji: 🪐
 colorFrom: pink
-colorTo: green
+colorTo: blue
 sdk: gradio
 sdk_version: 4.42.0
 app_file: app.py
