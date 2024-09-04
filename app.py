@@ -69,8 +69,8 @@ def generate(prompt,
     ):
     slider_x = [concept_2, concept_1]
     # check if avg diff for directions need to be re-calculated
-    print("slider_x", slider_x)
-    print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
+    #print("slider_x", slider_x)
+    #print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
     if randomize_seed:
             seed = random.randint(0, MAX_SEED)
         
