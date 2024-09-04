@@ -65,12 +65,11 @@ def generate(prompt,
              x_concept_1="", x_concept_2="", 
              avg_diff_x=None, 
              total_images=[],
-             progress=gr.Progress(track_tqdm=True)
+             progress=gr.Progress()
     ):
+    progress(0, desc="Calculating directions...")
     slider_x = [concept_2, concept_1]
     # check if avg diff for directions need to be re-calculated
-    #print("slider_x", slider_x)
-    #print("x_concept_1", x_concept_1, "x_concept_2", x_concept_2)
     if randomize_seed:
             seed = random.randint(0, MAX_SEED)
         
@@ -81,7 +80,7 @@ def generate(prompt,
     images = []
     high_scale = scale
     low_scale = -1 * scale
-    for i in range(interm_steps):
+    for i in progress.tqdm(range(interm_steps), desc="Generating images"):
         cur_scale = low_scale + (high_scale - low_scale) * i / (interm_steps - 1)
         image = clip_slider.generate(prompt, 
                                      width=768,
