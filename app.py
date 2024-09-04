@@ -134,7 +134,7 @@ intro = """
 </p>
 """
 css='''
-#strip, #video{max-height: 128px; min-height: 65px}
+#strip, #video{max-height: 256px; min-height: 65px}
 #strip img{object-fit: cover}
 .gradio-container{max-width: 1050px !important}
 '''
