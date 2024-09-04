@@ -21,7 +21,7 @@ pipe = FluxPipeline.from_pretrained(base_model,
                                     torch_dtype=torch.bfloat16)
 
 pipe.transformer.to(memory_format=torch.channels_last)
-# pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
+pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
 # pipe.enable_model_cpu_offload()
 clip_slider = CLIPSliderFlux(pipe, device=torch.device("cuda"))
 
@@ -163,7 +163,7 @@ with gr.Blocks(css=css) as demo:
         with gr.Column():
             with gr.Group(elem_id="group"):
                 post_generation_image = gr.Image(label="Generated Images", type="filepath")
-                post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1)
+                post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1, label="From 1st to 2nd direction")
             with gr.Row():
                 with gr.Column(scale=4, min_width=50):
                     image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
