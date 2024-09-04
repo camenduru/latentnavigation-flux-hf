@@ -119,6 +119,7 @@ intro = """
 """
 css='''
 #strip, #gif{max-height: 170px; min-height: 65px}
+#strip img{object-fit: cover}
 '''
 examples = [["a dog in the park", "winter", "summer", 1.25], ["a house", "USA suburb", "Europe", 2], ["a tomato", "rotten", "super fresh", 2]]
 
