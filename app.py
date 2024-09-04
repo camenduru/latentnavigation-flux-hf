@@ -162,15 +162,15 @@ with gr.Blocks(css=css) as demo:
             
         with gr.Column():
             output_image = gr.Video(label="Looping video", elem_id="video", loop=True, autoplay=True)
-            #with gr.Row():
-        
-    with gr.Column(scale=4, min_width=50):
-        image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
-        
-    with gr.Column(scale=2, min_width=50):
-        with gr.Group(elem_id="group"):
-            post_generation_image = gr.Image(label="Generated Images", type="filepath")
-            post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1, label="From 1st to 2nd direction")
+            
+    with gr.Row():
+        with gr.Column(scale=4, min_width=50):
+            image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
+            
+        with gr.Column(scale=2, min_width=50):
+            with gr.Group(elem_id="group"):
+                post_generation_image = gr.Image(label="Generated Images", type="filepath")
+                post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1, label="From 1st to 2nd direction")
     
     with gr.Accordion(label="Advanced options", open=False):
         interm_steps = gr.Slider(label = "Num of intermediate images", minimum=3, value=7, maximum=65, step=2)
