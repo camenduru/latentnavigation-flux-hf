@@ -134,7 +134,7 @@ intro = """
 </p>
 """
 css='''
-#strip, #interactive{max-height: 170px; min-height: 65px}
+#strip, #interactive{max-height: 256px; min-height: 65px}
 #strip img{object-fit: cover}
 '''
 examples = [["a dog in the park", "winter", "summer", 1.5], ["a house", "USA suburb", "Europe", 2.5], ["a tomato", "rotten", "super fresh", 2.5]]
@@ -164,7 +164,7 @@ with gr.Blocks(css=css) as demo:
             output_image = gr.Video(label="Looping video", elem_id="video", loop=True, autoplay=True)
             
     with gr.Row():
-        with gr.Column(scale=4, min_width=50):
+        with gr.Column(scale=3, min_width=50):
             image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
             
         with gr.Column(scale=2, min_width=50):
