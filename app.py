@@ -105,6 +105,7 @@ def generate(prompt,
     return x_concept_1,x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update, seed
 
 def update_pre_generated_images(slider_value, total_images):
+    print(total_images)
     number_images = len(total_images)
     if(number_images > 0):
         scale_tuple = convert_to_centered_scale(number_images)
@@ -145,7 +146,7 @@ with gr.Blocks(css=css) as demo:
     
     x_concept_1 = gr.State("")
     x_concept_2 = gr.State("")
-    total_images = gr.Gallery()
+    total_images = gr.Gallery(visible=False)
 
     avg_diff_x = gr.State()
 
