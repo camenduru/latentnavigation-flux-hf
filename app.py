@@ -21,7 +21,7 @@ pipe = FluxPipeline.from_pretrained(base_model,
                                     torch_dtype=torch.bfloat16)
 
 pipe.transformer.to(memory_format=torch.channels_last)
-# pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
+pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
 # pipe.enable_model_cpu_offload()
 clip_slider = CLIPSliderFlux(pipe, device=torch.device("cuda"))
 
@@ -124,9 +124,9 @@ intro = """
     <h3 style="display: inline-block;margin-left: 10px;margin-top: 6px;font-weight: 500">Exploring CLIP text space with FLUX.1 schnell 🪐</h3>
 </div>
 <p style="font-size: 0.95rem;margin: 0rem;line-height: 1.2em;margin-top:1em;display: inline-block">
-    <a href="https://www.ethansmith2000.com/post/traversing-through-clip-space-pca-and-latent-directions" target="_blank">based on & inspired by CLIP directions by Ethan Smith</a>
+    <a href="https://github.com/linoytsaban/semantic-sliders" target="_blank">Semantic Sliders repo</a>
      |
-    <a href="https://github.com/linoytsaban/semantic-sliders" target="_blank">code</a>
+    <a href="https://www.ethansmith2000.com/post/traversing-through-clip-space-pca-and-latent-directions" target="_blank">based on Ethan Smith's CLIP directions</a>
      | 
     <a href="https://huggingface.co/spaces/LatentNavigation/latentnavigation-flux?duplicate=true" target="_blank" style="
         display: inline-block;
