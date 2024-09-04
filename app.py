@@ -85,7 +85,7 @@ def generate(prompt,
     scale_middle = scale_total.index(0)
     post_generation_slider_update = gr.update(label=comma_concepts_x, value=0, minimum=scale_min, maximum=scale_max, interactive=True)
     avg_diff_x = avg_diff.cpu()
-    
+    print(images)
     return x_concept_1,x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update, seed
 
 def update_pre_generated_images(slider_value, total_images):
