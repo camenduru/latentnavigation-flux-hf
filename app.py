@@ -67,13 +67,13 @@ def generate(prompt,
              total_images=[],
              progress=gr.Progress()
     ):
-    progress(0, desc="Calculating directions...")
     slider_x = [concept_2, concept_1]
     # check if avg diff for directions need to be re-calculated
     if randomize_seed:
             seed = random.randint(0, MAX_SEED)
         
     if not sorted(slider_x) == sorted([x_concept_1, x_concept_2]) or recalc_directions:
+        progress(0, desc="Calculating directions...")
         avg_diff = clip_slider.find_latent_direction(slider_x[0], slider_x[1], num_iterations=iterations)
         x_concept_1, x_concept_2 = slider_x[0], slider_x[1]
 
@@ -133,8 +133,8 @@ intro = """
 </p>
 """
 css='''
-#strip, #video{max-height: 256px; min-height: 65px}
-#video .empty{min-height: 65px}
+#strip, #video{max-height: 256px; min-height: 80px}
+#video .empty{min-height: 80px}
 #strip img{object-fit: cover}
 .gradio-container{max-width: 960px !important}
 '''
@@ -167,14 +167,14 @@ with gr.Blocks(css=css) as demo:
                 post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1, label="From 1st to 2nd direction")
     with gr.Row():
         with gr.Column(scale=4):
-            image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
+            image_seq = gr.Image(label="Strip", elem_id="strip", height=80)
         with gr.Column(scale=2, min_width=100):
             output_image = gr.Video(label="Looping video", elem_id="video", loop=True, autoplay=True)
     with gr.Accordion(label="Advanced options", open=False):
         interm_steps = gr.Slider(label = "Num of intermediate images", minimum=3, value=7, maximum=65, step=2)
         with gr.Row():
-            iterations = gr.Slider(label = "Num iterations for clip directions", minimum=0, value=200, maximum=500, step=1)
-            steps = gr.Slider(label = "Num inference steps", minimum=1, value=3, maximum=8, step=1)
+            iterations = gr.Slider(label = "Num iterations for clip directions", minimum=0, value=200, maximum=400, step=1)
+            steps = gr.Slider(label = "Num inference steps", minimum=1, value=3, maximum=4, step=1)
         with gr.Row():
             guidance_scale = gr.Slider(
                 label="Guidance scale",
