@@ -134,7 +134,7 @@ intro = """
 </p>
 """
 css='''
-#strip, #video{max-height: 512px; min-height: 65px}
+#strip, #video{max-height: 128px; min-height: 65px}
 #strip img{object-fit: cover}
 .gradio-container{max-width: 1050px !important}
 '''
@@ -166,9 +166,9 @@ with gr.Blocks(css=css) as demo:
                 post_generation_image = gr.Image(label="Generated Images", type="filepath", elem_id="interactive")
                 post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1, label="From 1st to 2nd direction")
     with gr.Row():
-        with gr.Column(scale=3):
+        with gr.Column(scale=4):
             image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
-        with gr.Column(scale=2):
+        with gr.Column(scale=2, min_width=100):
             output_image = gr.Video(label="Looping video", elem_id="video", loop=True, autoplay=True)
     with gr.Accordion(label="Advanced options", open=False):
         interm_steps = gr.Slider(label = "Num of intermediate images", minimum=3, value=7, maximum=65, step=2)
