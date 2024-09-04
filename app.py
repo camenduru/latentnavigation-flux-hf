@@ -136,7 +136,7 @@ css='''
 #strip, #video{max-height: 256px; min-height: 65px}
 #video .empty{min-height: 65px}
 #strip img{object-fit: cover}
-.gradio-container{max-width: 1050px !important}
+.gradio-container{max-width: 960px !important}
 '''
 examples = [["a dog in the park", "winter", "summer", 1.5], ["a house", "USA suburb", "Europe", 2.5], ["a tomato", "rotten", "super fresh", 2.5]]
 
