@@ -9,7 +9,7 @@ import numpy as np
 import cv2
 from PIL import Image
 from diffusers.utils import load_image
-from diffusers.utils import export_to_gif
+from diffusers.utils import export_to_video
 import random
 
 # load pipelines
@@ -21,7 +21,7 @@ pipe = FluxPipeline.from_pretrained(base_model,
                                     torch_dtype=torch.bfloat16)
 
 pipe.transformer.to(memory_format=torch.channels_last)
-pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
+# pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
 # pipe.enable_model_cpu_offload()
 clip_slider = CLIPSliderFlux(pipe, device=torch.device("cuda"))
 
@@ -102,7 +102,7 @@ def generate(prompt,
     post_generation_slider_update = gr.update(label=comma_concepts_x, value=0, minimum=scale_min, maximum=scale_max, interactive=True)
     avg_diff_x = avg_diff.cpu()
     
-    return x_concept_1,x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update, seed
+    return x_concept_1,x_concept_2, avg_diff_x, export_to_video(images, f"{uuid.uuid4()}.mp4", fps=5), canvas, images, images[scale_middle], post_generation_slider_update, seed
 
 def update_pre_generated_images(slider_value, total_images):
     number_images = len(total_images)
@@ -134,7 +134,7 @@ intro = """
 </p>
 """
 css='''
-#strip, #gif{max-height: 170px; min-height: 65px}
+#strip, #video{max-height: 170px; min-height: 65px}
 #strip img{object-fit: cover}
 '''
 examples = [["a dog in the park", "winter", "summer", 1.5], ["a house", "USA suburb", "Europe", 2.5], ["a tomato", "rotten", "super fresh", 2.5]]
@@ -161,15 +161,16 @@ with gr.Blocks(css=css) as demo:
             submit = gr.Button("Generate directions")
             
         with gr.Column():
-            with gr.Group(elem_id="group"):
-                post_generation_image = gr.Image(label="Generated Images", type="filepath")
-                post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1, label="From 1st to 2nd direction")
-            with gr.Row():
-                with gr.Column(scale=4, min_width=50):
-                    image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
-                    
-                with gr.Column(scale=2, min_width=50):
-                    output_image = gr.Image(label="Gif", elem_id="gif")
+            output_image = gr.Video(label="Looping video", elem_id="video", loop=True, autoplay=True)
+            #with gr.Row():
+        
+    with gr.Column(scale=4, min_width=50):
+        image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
+        
+    with gr.Column(scale=2, min_width=50):
+        with gr.Group(elem_id="group"):
+            post_generation_image = gr.Image(label="Generated Images", type="filepath")
+            post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1, label="From 1st to 2nd direction")
     
     with gr.Accordion(label="Advanced options", open=False):
         interm_steps = gr.Slider(label = "Num of intermediate images", minimum=3, value=7, maximum=65, step=2)
