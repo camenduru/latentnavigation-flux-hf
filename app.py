@@ -134,7 +134,7 @@ intro = """
 </p>
 """
 css='''
-#strip, #video{max-height: 170px; min-height: 65px}
+#strip, #interactive{max-height: 170px; min-height: 65px}
 #strip img{object-fit: cover}
 '''
 examples = [["a dog in the park", "winter", "summer", 1.5], ["a house", "USA suburb", "Europe", 2.5], ["a tomato", "rotten", "super fresh", 2.5]]
@@ -169,7 +169,7 @@ with gr.Blocks(css=css) as demo:
             
         with gr.Column(scale=2, min_width=50):
             with gr.Group(elem_id="group"):
-                post_generation_image = gr.Image(label="Generated Images", type="filepath")
+                post_generation_image = gr.Image(label="Generated Images", type="filepath", elem_id="interactive")
                 post_generation_slider = gr.Slider(minimum=-10, maximum=10, value=0, step=1, label="From 1st to 2nd direction")
     
     with gr.Accordion(label="Advanced options", open=False):
