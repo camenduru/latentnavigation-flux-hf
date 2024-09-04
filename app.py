@@ -157,7 +157,7 @@ with gr.Blocks(css=css) as demo:
             with gr.Row():
                 concept_1 = gr.Textbox(label="1st direction to steer", placeholder="winter")
                 concept_2 = gr.Textbox(label="2nd direction to steer", placeholder="summer")
-            prompt = gr.Textbox(label="Prompt", info="Describe what you to be steered by the directions", placeholder="A dog in the park")
+            prompt = gr.Textbox(label="Prompt", info="Describe what to be steered by the directions", placeholder="A dog in the park")
             x = gr.Slider(minimum=0, value=1.75, step=0.1, maximum=4.0, label="Strength", info="maximum strength on each direction (unstable beyond 2.5)")
             submit = gr.Button("Generate directions")
             image_seq = gr.Image(label="Strip", elem_id="strip", height=65)
