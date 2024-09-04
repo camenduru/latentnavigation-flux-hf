@@ -60,7 +60,7 @@ def generate(prompt,
              recalc_directions=True,
              iterations=200, 
              steps=3, 
-             interm_steps=21, 
+             interm_steps=33, 
              guidance_scale=3.5,
              x_concept_1="", x_concept_2="", 
              avg_diff_x=None, 
@@ -137,7 +137,7 @@ css='''
 #strip, #gif{max-height: 170px; min-height: 65px}
 #strip img{object-fit: cover}
 '''
-examples = [["a dog in the park", "winter", "summer", 1.25], ["a house", "USA suburb", "Europe", 2], ["a tomato", "rotten", "super fresh", 2]]
+examples = [["a dog in the park", "winter", "summer", 1.5], ["a house", "USA suburb", "Europe", 2.5], ["a tomato", "rotten", "super fresh", 2.5]]
 
 with gr.Blocks(css=css) as demo:
 
@@ -157,7 +157,7 @@ with gr.Blocks(css=css) as demo:
                 concept_1 = gr.Textbox(label="1st direction to steer", placeholder="winter")
                 concept_2 = gr.Textbox(label="2nd direction to steer", placeholder="summer")
             prompt = gr.Textbox(label="Prompt", info="Describe what you to be steered by the directions", placeholder="A dog in the park")
-            x = gr.Slider(minimum=0, value=1.5, step=0.1, maximum=4.0, label="Strength", info="maximum strength on each direction (unstable beyond 2.5)")
+            x = gr.Slider(minimum=0, value=1.75, step=0.1, maximum=4.0, label="Strength", info="maximum strength on each direction (unstable beyond 2.5)")
             submit = gr.Button("Generate directions")
             
         with gr.Column():
@@ -172,7 +172,7 @@ with gr.Blocks(css=css) as demo:
                     output_image = gr.Image(label="Gif", elem_id="gif")
     
     with gr.Accordion(label="Advanced options", open=False):
-        interm_steps = gr.Slider(label = "Num of intermediate images", minimum=3, value=21, maximum=65, step=2)
+        interm_steps = gr.Slider(label = "Num of intermediate images", minimum=3, value=7, maximum=65, step=2)
         with gr.Row():
             iterations = gr.Slider(label = "Num iterations for clip directions", minimum=0, value=200, maximum=500, step=1)
             steps = gr.Slider(label = "Num inference steps", minimum=1, value=3, maximum=8, step=1)
