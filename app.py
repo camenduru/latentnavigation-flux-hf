@@ -20,21 +20,6 @@ pipe = FluxPipeline.from_pretrained(base_model,
                                     vae=taef1,
                                     torch_dtype=torch.bfloat16)
 
-os.makedirs("frames", exist_ok=True)
-def save_images_with_unique_filenames(image_list, save_directory):
-    if not os.path.exists(save_directory):
-        os.makedirs(save_directory)
-
-    paths = []
-    for image in image_list:
-        unique_filename = f"{uuid.uuid4()}.png"  
-        file_path = os.path.join(save_directory, unique_filename)
-        image.save(file_path)
-        paths.append(file_path)
-    
-    return paths
-
-
 pipe.transformer.to(memory_format=torch.channels_last)
 # pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
 # pipe.enable_model_cpu_offload()
@@ -117,13 +102,9 @@ def generate(prompt,
     post_generation_slider_update = gr.update(label=comma_concepts_x, value=0, minimum=scale_min, maximum=scale_max, interactive=True)
     avg_diff_x = avg_diff.cpu()
     
-    image_paths = save_images_with_unique_filenames(images, "frames")
-    
-    return x_concept_1,x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, image_paths, images[scale_middle], post_generation_slider_update, seed
+    return x_concept_1,x_concept_2, avg_diff_x, export_to_gif(images, "clip.gif", fps=5), canvas, images, images[scale_middle], post_generation_slider_update, seed
 
 def update_pre_generated_images(slider_value, total_images):
-    print(total_images)
-    print(slider_value)
     number_images = len(total_images)
     if(number_images > 0):
         scale_tuple = convert_to_centered_scale(number_images)
@@ -164,7 +145,7 @@ with gr.Blocks(css=css) as demo:
     
     x_concept_1 = gr.State("")
     x_concept_2 = gr.State("")
-    total_images = gr.State([])
+    total_images = gr.Gallery()
 
     avg_diff_x = gr.State()
 
