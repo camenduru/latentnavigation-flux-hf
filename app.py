@@ -21,7 +21,7 @@ pipe = FluxPipeline.from_pretrained(base_model,
                                     torch_dtype=torch.bfloat16)
 
 pipe.transformer.to(memory_format=torch.channels_last)
-pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
+#pipe.transformer = torch.compile(pipe.transformer, mode="max-autotune", fullgraph=True)
 # pipe.enable_model_cpu_offload()
 clip_slider = CLIPSliderFlux(pipe, device=torch.device("cuda"))
 
@@ -50,7 +50,7 @@ def convert_to_centered_scale(num):
         end = num // 2 
     return tuple(range(start, end + 1))
 
-@spaces.GPU(duration=200)
+@spaces.GPU(duration=65)
 def generate(prompt,
              concept_1,
              concept_2,
@@ -159,8 +159,8 @@ with gr.Blocks(css=css) as demo:
             with gr.Group():
                 prompt = gr.Textbox(label="Prompt", info="Describe what to be steered by the directions", placeholder="A dog in the park")
                 with gr.Row():
-                    concept_1 = gr.Textbox(label="1st direction to steer", placeholder="winter")
-                    concept_2 = gr.Textbox(label="2nd direction to steer", placeholder="summer")
+                    concept_1 = gr.Textbox(label="1st direction to steer", info="Starting state", placeholder="winter")
+                    concept_2 = gr.Textbox(label="2nd direction to steer", info="Finishing state", placeholder="summer")
             x = gr.Slider(minimum=0, value=1.75, step=0.1, maximum=4.0, label="Strength", info="maximum strength on each direction (unstable beyond 2.5)")
             submit = gr.Button("Generate directions")
         with gr.Column():
